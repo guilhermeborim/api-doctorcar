@@ -1,0 +1,11 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Swagger DoctorCar",
+    "description": "API REST para o projeto DoctorCar",
+    "version": "1.0.0",
+    "contact": {
+      "email": "borimdev@gmail.com"
+    }
+  }
+}

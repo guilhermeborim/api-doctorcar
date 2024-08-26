@@ -2,6 +2,9 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "commonjs",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

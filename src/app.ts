@@ -9,7 +9,7 @@ dotenv.config();
 
 export const app = express();
 
-app.use(cookieParser());
+app.use(cookieParser(process.env.COOKIE_SECRET as string));
 app.use(cors());
 app.use(helmet());
 app.use(express.json());

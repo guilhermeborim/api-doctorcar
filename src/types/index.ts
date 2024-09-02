@@ -32,7 +32,7 @@ export interface VehicleProps {
   owner: UserProps;
   kilometersDriven: number;
   dailyMileage: number;
-  maintenances: MaintenanceProps[];
+  maintenances?: MaintenanceProps[];
   stateVehicle: VehicleStateProps;
 }
 
@@ -41,7 +41,7 @@ export interface BrandProps {
   name: string;
   description: string;
   logo: string;
-  vehicles: VehicleProps[];
+  vehicles?: VehicleProps[];
 }
 
 // Maintenance
@@ -59,7 +59,7 @@ export interface MaintenanceTypeProps {
   name: string;
   benefits: string[];
   icon: string;
-  maintenances: MaintenanceProps[];
+  maintenances?: MaintenanceProps[];
 }
 
 // VehicleState

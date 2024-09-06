@@ -1,20 +1,33 @@
-import { NextFunction, Request, Response } from 'express';
-import { z, ZodError } from 'zod';
-
-import { StatusCodes } from 'http-status-codes';
+import { NextFunction, Request, Response } from "express";
+import { z, ZodError, ZodIssue } from "zod";
 
 export function validateData(schema: z.AnyZodObject) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       schema.parse(req.body);
       next();
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: error.errors.map((err) => err.message) })
+        const formattedError = formatZodError(error);
 
-      } else {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+        return res.status(400).json({ message: formattedError });
       }
     }
   };
 }
+
+const formatZodIssue = (issue: ZodIssue): string => {
+  const { message } = issue;
+
+  return `${message}`;
+};
+
+export const formatZodError = (error: ZodError): string => {
+  const { issues } = error;
+
+  if (issues.length) {
+    return issues.map(formatZodIssue).join(", ");
+  }
+
+  return "Invalid input data";
+};

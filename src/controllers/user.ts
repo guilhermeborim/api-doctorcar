@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
-import { response } from "express";
 import jwt from "jsonwebtoken";
 import { pool } from "../config/database";
+import { AppError } from "../errors/error";
 import { GenderByName } from "../middleware/genderByName";
 import {
   UserChangePasswordProps,
@@ -26,7 +26,7 @@ const create = async (user: UserCreateProps) => {
     );
     return rows;
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
@@ -37,14 +37,14 @@ const login = async (user: UserLoginProps) => {
     );
 
     if (rows.length === 0) {
-      return response.status(400).json({ message: "Usuário não encontrado" });
+      throw new AppError("Usuário não encontrado", 404);
     }
 
     const password = rows[0].password;
     const isMatch = await bcrypt.compare(user.password, password);
 
     if (!isMatch) {
-      return response.status(400).json({ message: "Senha Inválida" });
+      throw new AppError("Senha incorreta", 400);
     }
     const token = jwt.sign(
       { id: rows[0].id },
@@ -56,22 +56,7 @@ const login = async (user: UserLoginProps) => {
 
     return token;
   } catch (error) {
-    return error;
-  }
-};
-
-const logout = async () => {
-  try {
-    response
-      .clearCookie("token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      })
-      .json({ message: "Usuário deslogado" });
-  } catch (error: any) {
-    console.error(error);
-    response.status(500).json({ message: "Erro ao deslogar usuário" });
+    throw error;
   }
 };
 
@@ -80,21 +65,56 @@ const get = async (id: string) => {
     const { rows } = await pool.query(
       `SELECT * FROM "user" WHERE id = '${id}'`,
     );
+
+    if (rows.length === 0) {
+      throw new AppError("Usuário não encontrado", 404);
+    }
     return rows[0];
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
 const changePassword = async (user: UserChangePasswordProps) => {
   try {
-    const rows = await pool.query(
-      `UPDATE "user" SET password = '${user.newPassword}' WHERE email = '${user.email}' AND password = '${user.oldPassword}'`,
+    const password = await pool.query(
+      `SELECT "password" FROM "user" WHERE email = '${user.email}'`,
     );
+
+    const isMatch = await bcrypt.compare(
+      user.oldPassword,
+      password.rows[0].password,
+    );
+
+    if (!isMatch) {
+      throw new AppError("Senha antiga incorreta", 400);
+    }
+    const hashedNewPassword = await bcrypt.hash(user.newPassword, saltRounds);
+    const rows = await pool.query(
+      `UPDATE "user" SET password = '${hashedNewPassword}' WHERE email = '${user.email}'`,
+    );
+
+    if (rows.rowCount === 0) {
+      throw new AppError("Usuário não encontrado", 404);
+    }
     return rows;
   } catch (error) {
-    return error;
+    throw error;
   }
 };
 
-export { changePassword, create, get, login, logout };
+const checkEmailExist = async (email: string) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT "email" FROM "user" WHERE "email" = '${email}'`,
+    );
+
+    if (rows.length === 0) {
+      return false;
+    }
+    return rows;
+  } catch (error) {
+    throw error;
+  }
+};
+export { changePassword, checkEmailExist, create, get, login };

@@ -25,11 +25,12 @@ export interface UserChangePasswordProps {
 }
 // Vehicle
 export interface VehicleProps {
+  id?: string;
   brand: BrandProps;
   model: string;
   licensePlate: string;
   year: number;
-  owner: UserProps;
+  owner?: UserProps;
   kilometersDriven: number;
   dailyMileage: number;
   maintenances?: MaintenanceProps[];

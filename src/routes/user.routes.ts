@@ -1,11 +1,5 @@
 import { Router } from "express";
-import {
-  changePassword,
-  checkEmailExist,
-  create,
-  get,
-  login,
-} from "../controllers/user";
+import UserCtrl from "../controllers/user";
 import { AppError } from "../errors/error";
 import auth from "../middleware/auth";
 import { validateData } from "../middleware/validate";
@@ -17,7 +11,7 @@ import {
 export const userRouter = Router();
 
 userRouter.post(
-  "/",
+  "/register",
   validateData(createUserSchema),
   async (request, response) => {
     try {
@@ -25,13 +19,13 @@ userRouter.post(
 
       const register = { name, email, password };
 
-      const emailExist = await checkEmailExist(email);
+      const emailExist = await UserCtrl.checkEmailExist(email);
 
       if (emailExist) {
         throw new AppError("Este email já está cadastrado", 400);
       }
 
-      const registerSaved = await create(register);
+      const registerSaved = await UserCtrl.create(register);
 
       if (registerSaved) {
         return response.json({ status: 200, data: register });
@@ -56,7 +50,7 @@ userRouter.get("/", auth, async (request, response) => {
     throw new AppError("Usuário não encontrado", 404);
   }
   try {
-    const user = await get(userId);
+    const user = await UserCtrl.get(userId);
     return response.json({ status: "success", data: user });
   } catch (error) {
     if (error instanceof AppError) {
@@ -76,10 +70,10 @@ userRouter.post(
 
       const user = { email, password };
 
-      const userLogged = await login(user);
+      const userLogged = await UserCtrl.login(user);
 
       if (userLogged) {
-        return response.json({ status: 200, data: userLogged });
+        return response.json({ status: 200, token: userLogged });
       }
       return response.json({
         status: "error",
@@ -94,22 +88,22 @@ userRouter.post(
   },
 );
 
-userRouter.post(
+userRouter.put(
   "/change-password",
   validateData(changePasswordSchema),
   async (request, response) => {
     try {
-      const { email, oldPassword, newPassword } = request.body;
+      const { email, old_password, new_password } = request.body;
 
-      const user = { email, oldPassword, newPassword };
+      const user = { email, old_password, new_password };
 
-      const emailExist = await checkEmailExist(email);
+      const emailExist = await UserCtrl.checkEmailExist(email);
 
       if (!emailExist) {
         throw new AppError("Usuário não encontrado", 404);
       }
 
-      const passwordChanged = await changePassword(user);
+      const passwordChanged = await UserCtrl.changePassword(user);
 
       if (passwordChanged) {
         return response.json({

@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -12,28 +13,30 @@ import { Vehicle } from "./Vehicle";
 @Entity()
 export class Maintenance {
   @PrimaryGeneratedColumn("uuid")
-  id: string;
+  idmaintenance: string;
 
   @ManyToOne(() => Vehicle, (vehicle) => vehicle.maintenances)
+  @JoinColumn({ name: "vehicle_id" })
   vehicle: Vehicle;
 
   @ManyToOne(
     () => MaintenanceType,
     (maintenanceType) => maintenanceType.maintenances,
   )
-  maintenanceType: MaintenanceType;
+  @JoinColumn({ name: "maintenance_type_id" })
+  maintenance_type: MaintenanceType;
 
   @Column({ type: "integer", nullable: false })
-  kilometersAtService: number;
+  kilometers_at_service: number;
 
   @Column({ type: "integer", nullable: false })
-  kilometersNextService: number;
+  kilometers_next_service: number;
 
   @Column({ type: "date", nullable: false })
-  dateOfService: Date;
+  date_of_service: Date;
 
   @Column({ type: "float", nullable: false })
-  serviceCoast: number;
+  service_coast: number;
 
   @CreateDateColumn()
   createdAt: Date;

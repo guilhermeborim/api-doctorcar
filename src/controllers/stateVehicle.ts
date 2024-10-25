@@ -4,7 +4,7 @@ import { VehicleStateProps } from "../types";
 const create = async (vehicleState: VehicleStateProps) => {
   try {
     const rows = await pool.query(
-      `INSERT INTO "vehicle_state" ("name") VALUES('${vehicleState}')`,
+      `INSERT INTO "vehicle_state" ("name") VALUES('${vehicleState.name}')`,
     );
     return rows;
   } catch (error) {

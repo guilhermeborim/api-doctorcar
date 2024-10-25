@@ -20,11 +20,11 @@ const create = async (user: UserCreateProps) => {
       gender === "male" ? maleProfilePicture : femaleProfilePicture;
 
     const hashedPassword = await bcrypt.hash(user.password, saltRounds);
-    const rows = await pool.query(
-      `INSERT INTO "user" ("name", "email","password","profilePicture","createdAt", "updatedAt")
+    const { rows } = await pool.query(
+      `INSERT INTO "user" ("name", "email","password","profile_picture","createdAt", "updatedAt")
           VALUES('${user.name}', '${user.email}','${hashedPassword}','${selectedProfilePicture}', NOW(), NOW())`,
     );
-    return rows;
+    return rows[0];
   } catch (error) {
     throw error;
   }
@@ -82,22 +82,22 @@ const changePassword = async (user: UserChangePasswordProps) => {
     );
 
     const isMatch = await bcrypt.compare(
-      user.oldPassword,
+      user.old_password,
       password.rows[0].password,
     );
 
     if (!isMatch) {
       throw new AppError("Senha antiga incorreta", 400);
     }
-    const hashedNewPassword = await bcrypt.hash(user.newPassword, saltRounds);
-    const rows = await pool.query(
+    const hashedNewPassword = await bcrypt.hash(user.new_password, saltRounds);
+    const { rows } = await pool.query(
       `UPDATE "user" SET password = '${hashedNewPassword}' WHERE email = '${user.email}'`,
     );
 
-    if (rows.rowCount === 0) {
+    if (rows.length === 0) {
       throw new AppError("Usuário não encontrado", 404);
     }
-    return rows;
+    return rows[0];
   } catch (error) {
     throw error;
   }
@@ -117,4 +117,13 @@ const checkEmailExist = async (email: string) => {
     throw error;
   }
 };
-export { changePassword, checkEmailExist, create, get, login };
+
+const UserCtrl = {
+  create,
+  login,
+  get,
+  checkEmailExist,
+  changePassword,
+};
+
+export default UserCtrl;

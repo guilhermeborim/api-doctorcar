@@ -3,7 +3,7 @@ export interface UserProps {
   name: string;
   email: string;
   password: string;
-  profilePicture?: string;
+  profile_picture?: string;
   vehicles: VehicleProps[];
 }
 
@@ -20,21 +20,21 @@ export interface UserLoginProps {
 
 export interface UserChangePasswordProps {
   email: string;
-  oldPassword: string;
-  newPassword: string;
+  old_password: string;
+  new_password: string;
 }
 // Vehicle
 export interface VehicleProps {
   id?: string;
-  brand: BrandProps;
+  brand_id: BrandProps;
   model: string;
-  licensePlate: string;
+  license_plate: string;
   year: number;
-  owner?: UserProps;
-  kilometersDriven: number;
-  dailyMileage: number;
+  owner_id?: UserProps;
+  kilometers_driven: number;
+  daily_mileage: number;
   maintenances?: MaintenanceProps[];
-  stateVehicle: VehicleStateProps;
+  state_vehicle_id: VehicleStateProps;
 }
 
 // Brand
@@ -47,12 +47,12 @@ export interface BrandProps {
 
 // Maintenance
 export interface MaintenanceProps {
-  vehicle: VehicleProps;
-  maintenanceType: MaintenanceTypeProps;
-  kilometersAtService: number;
-  kilometersNextService: number;
-  dateOfService: Date;
-  serviceCoast: number;
+  vehicle_id: VehicleProps;
+  maintenance_type_id: MaintenanceTypeProps;
+  kilometers_at_service: number;
+  kilometers_next_service: number;
+  date_of_service: Date;
+  service_coast: number;
 }
 
 // MaintenanceType

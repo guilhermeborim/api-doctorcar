@@ -5,9 +5,9 @@ import { VehicleProps } from "../types";
 const create = async (vehicle: VehicleProps) => {
   try {
     const rows = await pool.query(
-      `INSERT INTO "vehicle" ("model", "licensePlate", "year", "kilometersDriven", "dailyMileage", "brandId", "ownerId", "stateVehicleId")
-        VALUES ('${vehicle.model}', '${vehicle.licensePlate}', '${vehicle.year}', '${vehicle.kilometersDriven}', '${vehicle.dailyMileage}',
-        '${vehicle.brand}', '${vehicle.owner}', '${vehicle.stateVehicle}')
+      `INSERT INTO "vehicle" ("model", "license_plate", "year", "kilometers_driven", "daily_mileage", "brand_id", "owner_id", "state_vehicle_id")
+        VALUES ('${vehicle.model}', '${vehicle.license_plate}', '${vehicle.year}', '${vehicle.kilometers_driven}', '${vehicle.daily_mileage}',
+        '${vehicle.brand_id}', '${vehicle.owner_id}', '${vehicle.state_vehicle_id}')
       `,
     );
     return rows;
@@ -62,7 +62,7 @@ const update = async (vehicle: VehicleProps) => {
 
 const deletar = async (id: string) => {
   try {
-    await pool.query(`DELETE FROM "maintenance" WHERE "vehicleId" = '${id}'`);
+    await pool.query(`DELETE FROM "maintenance" WHERE "vehicle_id" = '${id}'`);
     const rows = await pool.query(`DELETE FROM "vehicle" WHERE "id" = '${id}'`);
 
     if (rows.rowCount === 0) {
@@ -74,10 +74,10 @@ const deletar = async (id: string) => {
   }
 };
 
-const checkLicensePlateExists = async (licensePlate: string) => {
+const checkLicensePlateExists = async (license_plate: string) => {
   try {
     const { rows } = await pool.query(
-      `SELECT "licensePlate" FROM "vehicle" WHERE "licensePlate" = '${licensePlate}'`,
+      `SELECT "license_plate" FROM "vehicle" WHERE "license_plate" = '${license_plate}'`,
     );
 
     if (rows.length === 0) {

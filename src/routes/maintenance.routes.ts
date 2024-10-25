@@ -18,29 +18,29 @@ maintenance.post(
   async (request, response) => {
     try {
       const {
-        kilometersAtService,
-        kilometersNextService,
-        dateOfService,
-        serviceCoast,
-        vehicleId,
-        maintenanceTypeId,
+        kilometers_at_service,
+        kilometers_next_service,
+        date_of_service,
+        service_coast,
+        vehicle_id,
+        maintenance_type_id,
       } = request.body;
 
       const register = {
-        kilometersAtService,
-        kilometersNextService,
-        dateOfService,
-        serviceCoast,
-        vehicle: vehicleId,
-        maintenanceType: maintenanceTypeId,
+        kilometers_at_service,
+        kilometers_next_service,
+        date_of_service,
+        service_coast,
+        vehicle_id,
+        maintenance_type_id,
       };
-
-      const vehicleExist = await checkVehicleExist(vehicleId);
+      const vehicleExist = await checkVehicleExist(vehicle_id);
       if (!vehicleExist) {
         throw new AppError("Veículo não existe.", 404);
       }
 
       const registerSaved = await create(register);
+
       if (registerSaved) {
         return response.json({
           status: 200,

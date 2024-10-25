@@ -22,7 +22,7 @@ export class User {
   password: string;
 
   @Column({ type: "text", nullable: true })
-  profilePicture: string;
+  profile_picture: string;
 
   @OneToMany(() => Vehicle, (vehicle) => vehicle.owner)
   vehicles: Vehicle[];

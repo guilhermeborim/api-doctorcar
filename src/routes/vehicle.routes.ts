@@ -20,27 +20,27 @@ vehicle.post(
     try {
       const {
         model,
-        licensePlate,
+        license_plate,
         year,
-        kilometersDriven,
-        dailyMileage,
-        brandId,
-        ownerId,
-        stateVehicleId,
+        kilometers_driven,
+        daily_mileage,
+        brand_id,
+        owner_id,
+        state_vehicle_id,
       } = request.body;
 
       const register = {
         model,
-        licensePlate,
+        license_plate,
         year,
-        kilometersDriven,
-        dailyMileage,
-        brand: brandId,
-        owner: ownerId,
-        stateVehicle: stateVehicleId,
+        kilometers_driven,
+        daily_mileage,
+        brand_id,
+        owner_id,
+        state_vehicle_id,
       };
 
-      const existingVehicle = await checkLicensePlateExists(licensePlate);
+      const existingVehicle = await checkLicensePlateExists(license_plate);
 
       if (existingVehicle) {
         throw new AppError("Esta placa já está cadastrada", 400);
@@ -69,6 +69,7 @@ vehicle.post(
 vehicle.get("/", auth, async (request, response) => {
   try {
     const vehicle = await get();
+
     return response.json({ status: "success", data: vehicle });
   } catch (error) {
     if (error instanceof AppError) {
@@ -95,23 +96,23 @@ vehicle.put(
     try {
       const {
         model,
-        licensePlate,
+        license_plate,
         year,
-        kilometersDriven,
-        dailyMileage,
-        brandId,
-        stateVehicleId,
+        kilometers_driven,
+        daily_mileage,
+        brand_id,
+        state_vehicle_id,
       } = request.body;
 
       const register = {
         id,
         model,
-        licensePlate,
+        license_plate,
         year,
-        kilometersDriven,
-        dailyMileage,
-        brand: brandId,
-        stateVehicle: stateVehicleId,
+        kilometers_driven,
+        daily_mileage,
+        brand_id,
+        state_vehicle_id,
       };
 
       const registerSaved = await update(register);

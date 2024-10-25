@@ -15,6 +15,6 @@ export class MaintenanceType {
   @Column({ type: "text", nullable: false })
   icon: string;
 
-  @OneToMany(() => Maintenance, (maintenance) => maintenance.maintenanceType)
+  @OneToMany(() => Maintenance, (maintenance) => maintenance.maintenance_type)
   maintenances: Maintenance[];
 }

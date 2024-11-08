@@ -1,24 +1,28 @@
-import { pool } from "../config/database";
-import { VehicleStateProps } from "../types";
+import { prismaClient } from "../prisma";
+import { VehicleStateCreateProps } from "../types";
 
-const create = async (vehicleState: VehicleStateProps) => {
+const create = async (name: string) => {
+  console.log(name);
   try {
-    const rows = await pool.query(
-      `INSERT INTO "vehicle_state" ("name") VALUES('${vehicleState}')`,
-    );
-    return rows;
+    const row = await prismaClient.vehicleState.create({
+      data: {
+        name: name,
+      },
+    });
+    console.log(row);
+    return row;
   } catch (error) {
     return error;
   }
 };
 
-const get = async () => {
+const returnAll = async () => {
   try {
-    const { rows } = await pool.query(`SELECT * FROM "vehicle_state"`);
+    const rows = await prismaClient.vehicleState.findMany({});
     return { rows };
   } catch (error) {
     return error;
   }
 };
 
-export { create, get };
+export { create, returnAll };

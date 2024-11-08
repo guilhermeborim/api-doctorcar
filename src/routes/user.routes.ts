@@ -1,52 +1,105 @@
 import { Router } from "express";
-import { create, get, login } from "../controllers/user";
+import { returnById, login, create, changePassword } from "../controllers/user";
+import {
+  ErrorResponse,
+  ServerErrorResponse,
+  SuccessResponse,
+} from "../types/response";
+import { validateData } from "../middleware/validate";
+import {
+  changePasswordUserSchema,
+  createUserSchema,
+  loginUserSchema,
+} from "../utils/user/validation";
 import auth from "../middleware/auth";
+
 export const userRouter = Router();
 
-userRouter.post("/", async (request, response) => {
-  try {
-    const { name, email, password } = request.body;
+userRouter.post(
+  "/",
+  validateData(createUserSchema),
+  async (request, response) => {
+    try {
+      const { name, email, password } = request.body;
 
-    const register = { name, email, password };
+      const user = await create({ name, email, password });
 
-    const registerSaved = await create(register);
-
-    if (registerSaved) {
-      return response.json({ status: 200, data: register });
+      if (user) {
+        return response.json(
+          new SuccessResponse("User created successfuly", user),
+        );
+      }
+      return response.json(new ErrorResponse("Failed created user"));
+    } catch (error) {
+      return response.json(new ServerErrorResponse(error));
     }
-    return response.json({
-      status: "error",
-    });
-  } catch (error) {
-    return response.json({ status: "failed", message: error });
-  }
-});
+  },
+);
 
 userRouter.get("/", auth, async (request, response) => {
   const userId = request.tokenData.id;
   try {
-    const user = await get(userId);
-    return response.json({ status: "success", data: user });
-  } catch (error) {
-    return response.json({ status: "failed", message: error });
-  }
-});
-
-userRouter.post("/login", async (request, response) => {
-  try {
-    const { email, password } = request.body;
-
-    const user = { email, password };
-
-    const userLogged = await login(user);
-
-    if (userLogged) {
-      return response.json({ status: 200, data: userLogged });
+    const user = await returnById(userId);
+    if (user) {
+      return response.json(new SuccessResponse("Get user successfuly", user));
     }
-    return response.json({
-      status: "error",
-    });
+    return response.json(new ErrorResponse("Failed get user"));
   } catch (error) {
-    return response.json({ status: "failed", message: error });
+    return response.json(new ServerErrorResponse(error));
   }
 });
+
+userRouter.post(
+  "/login",
+  validateData(loginUserSchema),
+  async (request, response) => {
+    try {
+      const { email, password } = request.body;
+
+      const register = {
+        email,
+        password,
+      };
+
+      const token = await login(register);
+
+      if (token) {
+        return response.json({
+          status: 200,
+          message: "Login user successfuly",
+          data: token,
+        });
+      }
+
+      return response.json(new ErrorResponse("Failed login user"));
+    } catch (error) {
+      return response.json(new ServerErrorResponse(error));
+    }
+  },
+);
+
+userRouter.put(
+  "/change-password",
+  validateData(changePasswordUserSchema),
+  async (request, response) => {
+    try {
+      const { email, old_password, new_password } = request.body;
+
+      const updatedUser = await changePassword({
+        email,
+        new_password,
+        old_password,
+      });
+
+      if (updatedUser) {
+        return response.json(
+          new SuccessResponse("Change Password user successfuly", updatedUser),
+        );
+      }
+
+      return response.json(new ErrorResponse("Failed change password user"));
+    } catch (error) {
+      return response.json(new ServerErrorResponse(error));
+    }
+  },
+);

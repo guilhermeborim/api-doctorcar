@@ -18,10 +18,12 @@ import {
   createMaintenanceSchema,
   editMaintenanceSchema,
 } from "../utils/maintenance/validation";
+import auth from "../middleware/auth";
 export const maintenance = Router();
 
 maintenance.post(
   "/",
+  auth,
   validateData(createMaintenanceSchema),
   async (request, response) => {
     try {
@@ -57,7 +59,7 @@ maintenance.post(
   },
 );
 
-maintenance.get("/", async (request, response) => {
+maintenance.get("/", auth, async (request, response) => {
   try {
     const maintenances = await returnAll();
 
@@ -74,6 +76,7 @@ maintenance.get("/", async (request, response) => {
 
 maintenance.patch(
   "/",
+  auth,
   validateData(editMaintenanceSchema),
   async (request, response) => {
     try {
@@ -116,7 +119,7 @@ maintenance.patch(
   },
 );
 
-maintenance.get("/:id", async (request, response) => {
+maintenance.get("/:id", auth, async (request, response) => {
   try {
     const { id } = request.params;
 
@@ -134,7 +137,7 @@ maintenance.get("/:id", async (request, response) => {
   }
 });
 
-maintenance.get("/vehicle/:id", async (request, response) => {
+maintenance.get("/vehicle/:id", auth, async (request, response) => {
   try {
     const { id } = request.params;
 
@@ -156,7 +159,7 @@ maintenance.get("/vehicle/:id", async (request, response) => {
   }
 });
 
-maintenance.delete("/delete/:id", async (request, response) => {
+maintenance.delete("/delete/:id", auth, async (request, response) => {
   try {
     const { id } = request.params;
 

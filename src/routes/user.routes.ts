@@ -37,9 +37,10 @@ userRouter.post(
 );
 
 userRouter.get("/", auth, async (request, response) => {
-  const userId = request.tokenData.id;
+  const { id } = request.tokenData;
   try {
-    const user = await returnById(userId);
+    const user = await returnById(id);
+
     if (user) {
       return response.json(new SuccessResponse("Get user successfuly", user));
     }

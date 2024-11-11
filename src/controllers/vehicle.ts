@@ -22,20 +22,29 @@ const create = async (vehicle: VehicleCreateProps) => {
   }
 };
 
-const returnAll = async () => {
+const returnAll = async (owner_id: string) => {
   try {
-    const rows = await prismaClient.vehicle.findMany({});
+    const rows = await prismaClient.vehicle.findMany({
+      where: {
+        owner_id: owner_id,
+      },
+      include: {
+        brand: true,
+        state_vehicle: true,
+      },
+    });
     return rows;
   } catch (error) {
     return error;
   }
 };
 
-const returnById = async (vehicle_id: string) => {
+const returnById = async (vehicle_id: string, owner_id: string) => {
   try {
     const rows = await prismaClient.vehicle.findUnique({
       where: {
         idvehicle: vehicle_id,
+        owner_id: owner_id,
       },
     });
     return rows;
@@ -54,7 +63,6 @@ const update = async (vehicle_id: string, vehicle: VehicleCreateProps) => {
         daily_mileage: vehicle.daily_mileage,
         kilometers_driven: vehicle.kilometers_driven,
         brand_id: vehicle.brand_id,
-        owner_id: vehicle.owner_id,
         state_vehicle_id: vehicle.state_vehicle_id,
       },
       where: {
@@ -67,42 +75,18 @@ const update = async (vehicle_id: string, vehicle: VehicleCreateProps) => {
   }
 };
 
-const deletar = async (vehicle_id: string) => {
+const deletar = async (vehicle_id: string, owner_id: string) => {
   try {
     const rows = await prismaClient.vehicle.delete({
       where: {
         idvehicle: vehicle_id,
-      },
-    });
-    return rows;
-  } catch (error) {
-    return error;
-  }
-};
-
-const returnAllVehiclesByUser = async (owner_id: string) => {
-  try {
-    const rows = await prismaClient.vehicle.findMany({
-      where: {
         owner_id: owner_id,
       },
-      include: {
-        brand: true,
-        state_vehicle: true,
-      },
     });
-
     return rows;
   } catch (error) {
     return error;
   }
 };
 
-export {
-  create,
-  returnAll,
-  returnById,
-  update,
-  deletar,
-  returnAllVehiclesByUser,
-};
+export { create, returnAll, returnById, update, deletar };

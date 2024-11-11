@@ -1,11 +1,10 @@
-import { response, Router } from "express";
+import { Router } from "express";
 import {
   create,
   update,
   deletar,
   returnAll,
   returnById,
-  returnAllVehiclesByUser,
 } from "../controllers/vehicle";
 import { VehicleCreateProps } from "../types";
 import {
@@ -18,10 +17,12 @@ import {
   createVehicleSchema,
   editVehicleSchema,
 } from "../utils/vehicle/validation";
+import auth from "../middleware/auth";
 export const vehicle = Router();
 
 vehicle.post(
   "/",
+  auth,
   validateData(createVehicleSchema),
   async (request, response) => {
     try {
@@ -32,10 +33,9 @@ vehicle.post(
         kilometers_driven,
         daily_mileage,
         brand_id,
-        owner_id,
         state_vehicle_id,
       } = request.body;
-
+      const { id } = request.tokenData;
       const register = {
         model,
         year,
@@ -43,7 +43,7 @@ vehicle.post(
         kilometers_driven,
         daily_mileage,
         brand_id,
-        owner_id,
+        owner_id: id,
         state_vehicle_id,
       };
       const registerSaved = await create(register);
@@ -62,6 +62,7 @@ vehicle.post(
 
 vehicle.patch(
   "/",
+  auth,
   validateData(editVehicleSchema),
   async (request, response) => {
     try {
@@ -73,11 +74,10 @@ vehicle.patch(
         kilometers_driven,
         daily_mileage,
         brand_id,
-        owner_id,
         state_vehicle_id,
       } = request.body;
-
-      const vehicle = (await returnById(idvehicle)) as VehicleCreateProps;
+      const { id } = request.tokenData;
+      const vehicle = (await returnById(idvehicle, id)) as VehicleCreateProps;
 
       vehicle.model = model;
       vehicle.license_plate = license_plate;
@@ -85,7 +85,6 @@ vehicle.patch(
       vehicle.kilometers_driven = kilometers_driven;
       vehicle.daily_mileage = daily_mileage;
       vehicle.brand_id = brand_id;
-      vehicle.owner_id = owner_id;
       vehicle.state_vehicle_id = state_vehicle_id;
 
       const registerUpdate = await update(idvehicle, vehicle);
@@ -102,9 +101,10 @@ vehicle.patch(
   },
 );
 
-vehicle.get("/", async (request, response) => {
+vehicle.get("/", auth, async (request, response) => {
   try {
-    const vehicles = await returnAll();
+    const { id } = request.tokenData;
+    const vehicles = await returnAll(id);
 
     if (vehicles) {
       return response.json(
@@ -117,11 +117,11 @@ vehicle.get("/", async (request, response) => {
   }
 });
 
-vehicle.get("/:id", async (request, response) => {
+vehicle.get("/:id", auth, async (request, response) => {
   try {
     const { id } = request.params;
-
-    const vehicle = await returnById(id);
+    const { id: iduser } = request.tokenData;
+    const vehicle = await returnById(id, iduser);
 
     if (vehicle) {
       return response.json(
@@ -134,27 +134,12 @@ vehicle.get("/:id", async (request, response) => {
   }
 });
 
-vehicle.get("/vehicles/:id", async (request, response) => {
+vehicle.delete("/delete/:id", auth, async (request, response) => {
   try {
     const { id } = request.params;
+    const { id: iduser } = request.tokenData;
 
-    const vehicles = await returnAllVehiclesByUser(id);
-
-    if (vehicles) {
-      return response.json(
-        new SuccessResponse("All vehicles by user successfuly", vehicles),
-      );
-    }
-    return response.json(new ErrorResponse("Failed get all vehicles by user"));
-  } catch (error) {
-    return response.json(new ServerErrorResponse(error));
-  }
-});
-vehicle.delete("/delete/:id", async (request, response) => {
-  try {
-    const { id } = request.params;
-
-    const vehicle = await deletar(id);
+    const vehicle = await deletar(id, iduser);
 
     if (vehicle) {
       return response.json(

@@ -1,23 +1,23 @@
 import { Router } from "express";
 import {
   create,
-  update,
   deletar,
   returnAll,
   returnById,
+  update,
 } from "../controllers/vehicle";
+import auth from "../middleware/auth";
+import { validateData } from "../middleware/validate";
 import { VehicleCreateProps } from "../types";
 import {
   ErrorResponse,
   ServerErrorResponse,
   SuccessResponse,
 } from "../types/response";
-import { validateData } from "../middleware/validate";
 import {
   createVehicleSchema,
   editVehicleSchema,
 } from "../utils/vehicle/validation";
-import auth from "../middleware/auth";
 export const vehicle = Router();
 
 vehicle.post(

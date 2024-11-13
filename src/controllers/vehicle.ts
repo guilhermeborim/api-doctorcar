@@ -89,4 +89,4 @@ const deletar = async (vehicle_id: string, owner_id: string) => {
   }
 };
 
-export { create, returnAll, returnById, update, deletar };
+export { create, deletar, returnAll, returnById, update };

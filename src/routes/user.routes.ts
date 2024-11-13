@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { returnById, login, create, changePassword } from "../controllers/user";
+import { changePassword, create, login, returnById } from "../controllers/user";
+import auth from "../middleware/auth";
+import { validateData } from "../middleware/validate";
 import {
   ErrorResponse,
   ServerErrorResponse,
   SuccessResponse,
 } from "../types/response";
-import { validateData } from "../middleware/validate";
 import {
   changePasswordUserSchema,
   createUserSchema,
   loginUserSchema,
 } from "../utils/user/validation";
-import auth from "../middleware/auth";
 
 export const userRouter = Router();
 
@@ -56,14 +56,13 @@ userRouter.post(
   async (request, response) => {
     try {
       const { email, password } = request.body;
-
       const register = {
         email,
         password,
       };
 
       const token = await login(register);
-
+      console.log(token);
       if (token) {
         return response.json({
           status: 200,

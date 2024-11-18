@@ -14,9 +14,17 @@ const create = async (maintenance: MaintenanceCreateProps) => {
       },
     });
 
-    return rows;
+    return {
+      status: 200,
+      message: "Manutenção criada com sucesso",
+      data: rows,
+    };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
@@ -38,9 +46,18 @@ const update = async (
         idmaintenance: maintenance_id,
       },
     });
-    return row;
+
+    return {
+      status: 200,
+      message: "Manutenção modificada com sucesso",
+      data: row,
+    };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
@@ -48,9 +65,17 @@ const returnAll = async () => {
   try {
     const rows = await prismaClient.maintenance.findMany({});
 
-    return rows;
+    return {
+      status: 200,
+      message: "Manutenção encontrada com sucesso",
+      data: rows,
+    };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
@@ -62,9 +87,17 @@ const returnById = async (maintenance_id: string) => {
       },
     });
 
-    return row;
+    return {
+      status: 200,
+      message: "Manutenção encontrada com sucesso",
+      data: row,
+    };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
@@ -76,9 +109,17 @@ const returnByVehicle = async (vehicle_id: string) => {
       },
     });
 
-    return rows;
+    return {
+      status: 200,
+      message: "Manutenção encontrada com sucesso",
+      data: rows,
+    };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
@@ -89,9 +130,18 @@ const deletar = async (maintenance_id: string) => {
         idmaintenance: maintenance_id,
       },
     });
-    return row;
+
+    return {
+      status: 200,
+      message: "Manutenção deletada com sucesso",
+      data: row,
+    };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 export { create, update, returnAll, returnById, returnByVehicle, deletar };

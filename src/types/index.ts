@@ -50,7 +50,6 @@ export interface VehicleCreateProps {
   kilometers_driven: number;
   daily_mileage: number;
   brand_id: string;
-  owner_id: string;
   state_vehicle_id: string;
 }
 // Get Brand

@@ -12,7 +12,6 @@ import {
   ServerErrorResponse,
   SuccessResponse,
 } from "../types/response";
-import { MaintenanceCreateProps } from "../types";
 import { validateData } from "../middleware/validate";
 import {
   createMaintenanceSchema,
@@ -45,14 +44,14 @@ maintenance.post(
         vehicle_id,
       };
 
-      const registerSaved = await create(register);
+      const { data, message, status } = await create(register);
 
-      if (registerSaved) {
-        return response.json(
-          new SuccessResponse("Maintenance created successfuly", registerSaved),
-        );
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, data));
       }
-      return response.json(new ErrorResponse("Failed to created maintenance"));
+      return response
+        .status(400)
+        .json(new ErrorResponse("Falha ao criar Manutenção"));
     } catch (error) {
       return response.json(new ServerErrorResponse(error));
     }
@@ -61,14 +60,14 @@ maintenance.post(
 
 maintenance.get("/", auth, async (request, response) => {
   try {
-    const maintenances = await returnAll();
+    const { data, message, status } = await returnAll();
 
-    if (maintenances) {
-      return response.json(
-        new SuccessResponse("Get maintenances successfuly", maintenances),
-      );
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
     }
-    return response.json(new ErrorResponse("Failed get maintenances"));
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao buscar Manutenção"));
   } catch (error) {
     return response.json(new ServerErrorResponse(error));
   }
@@ -90,29 +89,36 @@ maintenance.patch(
         maintenance_type_id,
       } = request.body;
 
-      const maintenance = (await returnById(
-        idmaintenance,
-      )) as MaintenanceCreateProps;
+      const { data } = await returnById(idmaintenance);
 
-      maintenance.kilometers_at_service = kilometers_at_service;
-      maintenance.kilometers_next_service = kilometers_next_service;
-      maintenance.date_of_service = date_of_service;
-      maintenance.service_coast = service_coast;
-      maintenance.vehicle_id = vehicle_id;
-      maintenance.maintenance_type_id = maintenance_type_id;
-
-      const registerUpdate = await update(idmaintenance, maintenance);
-
-      if (registerUpdate) {
-        return response.json(
-          new SuccessResponse(
-            "Maintenance updated successfuly",
-            registerUpdate,
-          ),
-        );
+      if (!data) {
+        return response
+          .status(404)
+          .json(new ErrorResponse("Veículo nao existe"));
       }
 
-      return response.json(new ErrorResponse("Failed updated maintenance"));
+      const updateMaintenance = {
+        kilometers_at_service,
+        kilometers_next_service,
+        date_of_service,
+        service_coast,
+        vehicle_id,
+        maintenance_type_id,
+      };
+
+      const {
+        data: dataMaintenance,
+        message,
+        status,
+      } = await update(idmaintenance, updateMaintenance);
+
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, dataMaintenance));
+      }
+
+      return response
+        .status(400)
+        .json(new ErrorResponse("Falha ao modificar Manutenção"));
     } catch (error) {
       return response.json(new ServerErrorResponse(error));
     }
@@ -123,15 +129,15 @@ maintenance.get("/:id", auth, async (request, response) => {
   try {
     const { id } = request.params;
 
-    const maintenance = await returnById(id);
+    const { data, message, status } = await returnById(id);
 
-    if (maintenance) {
-      return response.json(
-        new SuccessResponse("Get maintenance by id successfuly", maintenance),
-      );
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
     }
 
-    return response.json(new ErrorResponse("Failed get maintenance by id"));
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao buscar Manutenção"));
   } catch (error) {
     return response.json(new ServerErrorResponse(error));
   }
@@ -141,19 +147,14 @@ maintenance.get("/vehicle/:id", auth, async (request, response) => {
   try {
     const { id } = request.params;
 
-    const maintenances = await returnByVehicle(id);
+    const { data, message, status } = await returnByVehicle(id);
 
-    if (maintenances) {
-      return response.json(
-        new SuccessResponse(
-          "Get maintenance by vehicle successfuly",
-          maintenances,
-        ),
-      );
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
     }
-    return response.json(
-      new ErrorResponse("Failed get maintenance by vehicle"),
-    );
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao buscar Manutenção"));
   } catch (error) {
     return response.json(new ServerErrorResponse(error));
   }
@@ -163,19 +164,14 @@ maintenance.delete("/delete/:id", auth, async (request, response) => {
   try {
     const { id } = request.params;
 
-    const maintenance = await deletar(id);
+    const { data, message, status } = await deletar(id);
 
-    if (maintenance) {
-      return response.json(
-        new SuccessResponse(
-          "Delete maintenance by id successfuly",
-          maintenance,
-        ),
-      );
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
     }
-    return response.json(
-      new ErrorResponse("Failed to delete maintenance by id"),
-    );
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao deletar Manutenção"));
   } catch (error) {
     return response.json(new ServerErrorResponse(error));
   }

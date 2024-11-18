@@ -22,14 +22,14 @@ userRouter.post(
     try {
       const { name, email, password } = request.body;
 
-      const user = await create({ name, email, password });
+      const { data, message, status } = await create({ name, email, password });
 
-      if (user) {
-        return response.json(
-          new SuccessResponse("User created successfuly", user),
-        );
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, data));
       }
-      return response.json(new ErrorResponse("Failed created user"));
+      return response
+        .status(400)
+        .json(new ErrorResponse("Falha ao criar o usuário"));
     } catch (error) {
       return response.json(new ServerErrorResponse(error));
     }
@@ -39,12 +39,14 @@ userRouter.post(
 userRouter.get("/", auth, async (request, response) => {
   const { id } = request.tokenData;
   try {
-    const user = await returnById(id);
+    const { data, message, status } = await returnById(id);
 
-    if (user) {
-      return response.json(new SuccessResponse("Get user successfuly", user));
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
     }
-    return response.json(new ErrorResponse("Failed get user"));
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao buscar o usuário"));
   } catch (error) {
     return response.json(new ServerErrorResponse(error));
   }
@@ -61,17 +63,15 @@ userRouter.post(
         password,
       };
 
-      const token = await login(register);
-      console.log(token);
-      if (token) {
-        return response.json({
-          status: 200,
-          message: "Login user successfuly",
-          data: token,
-        });
+      const { status, message, data } = await login(register);
+
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, data));
       }
 
-      return response.json(new ErrorResponse("Failed login user"));
+      return response.status(400).json({
+        message: message,
+      });
     } catch (error) {
       return response.json(new ServerErrorResponse(error));
     }
@@ -85,19 +85,19 @@ userRouter.put(
     try {
       const { email, old_password, new_password } = request.body;
 
-      const updatedUser = await changePassword({
+      const { data, message, status } = await changePassword({
         email,
         new_password,
         old_password,
       });
 
-      if (updatedUser) {
-        return response.json(
-          new SuccessResponse("Change Password user successfuly", updatedUser),
-        );
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, data));
       }
 
-      return response.json(new ErrorResponse("Failed change password user"));
+      return response
+        .status(400)
+        .json(new ErrorResponse("Falha ao modificar a senha"));
     } catch (error) {
       return response.json(new ServerErrorResponse(error));
     }

@@ -1,3 +1,9 @@
+export interface ResponseApi {
+  status: number;
+  message: string;
+  data: any;
+}
+
 export class SuccessResponse<T> {
   status: number;
   message: string;

@@ -22,6 +22,16 @@ const create = async (user: UserCreateProps) => {
 
     const hashedPassword = await bcrypt.hash(user.password, saltRounds);
 
+    const userExist = await prismaClient.user.findUnique({
+      where: {
+        email: user.email,
+      },
+    });
+
+    if (userExist) {
+      return { status: 400, message: "Email já está em uso", data: null };
+    }
+
     const newUser = await prismaClient.user.create({
       data: {
         name: user.name,
@@ -31,9 +41,13 @@ const create = async (user: UserCreateProps) => {
       },
     });
 
-    return newUser;
+    return { status: 200, message: "Conta criada com sucesso", data: newUser };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
@@ -44,26 +58,30 @@ const login = async (user: UserLoginProps) => {
     });
 
     if (!foundUser) {
-      return response.status(400).json({ message: "Usuário não encontrado" });
+      return { status: 400, message: "Usuário não encontrado", data: null };
     }
 
     const isMatch = await bcrypt.compare(user.password, foundUser.password);
 
     if (!isMatch) {
-      return response.status(400).json({ message: "Senha Inválida" });
+      return { status: 400, message: "Senha inválida", data: null };
     }
 
     const token = jwt.sign(
       { id: foundUser.id },
       process.env.JWT_SECRET as string,
       {
-        expiresIn: "1d",
+        expiresIn: "7d",
       },
     );
 
-    return token;
+    return { status: 200, message: "Login bem-sucedido", data: token };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
@@ -77,7 +95,11 @@ const logout = async () => {
       })
       .json({ message: "Usuário deslogado" });
   } catch (error: any) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
@@ -86,15 +108,30 @@ const returnById = async (id: string) => {
     const user = await prismaClient.user.findUnique({
       where: { id },
     });
-    return user;
+
+    return { status: 200, message: "Usuário buscado com sucesso", data: user };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
 const changePassword = async (user: UserChangePasswordProps) => {
   try {
     const hashedPassword = await bcrypt.hash(user.new_password, saltRounds);
+
+    const userExist = await prismaClient.user.findUnique({
+      where: {
+        email: user.email,
+      },
+    });
+
+    if (!userExist) {
+      return { status: 400, message: "Usuário nao encontrado", data: null };
+    }
 
     const updatedUser = await prismaClient.user.updateMany({
       where: {
@@ -106,9 +143,17 @@ const changePassword = async (user: UserChangePasswordProps) => {
       },
     });
 
-    return updatedUser;
+    return {
+      status: 200,
+      message: "Senha modificada com sucesso",
+      updatedUser,
+    };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 

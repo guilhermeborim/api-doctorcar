@@ -144,4 +144,4 @@ const deletar = async (maintenance_id: string) => {
     };
   }
 };
-export { create, update, returnAll, returnById, returnByVehicle, deletar };
+export { create, deletar, returnAll, returnById, returnByVehicle, update };

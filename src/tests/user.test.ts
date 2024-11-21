@@ -1,45 +1,241 @@
-import request from "supertest";
-import { app } from "../app"; // Caminho para o arquivo principal do Express
-import { pool } from "../config/database"; // A conexão com o banco de dados
+import { create, login } from "../controllers/user";
+import { prismaMock } from "../singleton";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
-// Mockar o pool de conexão e a função de autenticação
-jest.mock("../config/database", () => ({
-  pool: {
-    query: jest.fn(),
-  },
+jest.mock("bcrypt", () => ({
+  compare: jest.fn(),
+  hash: jest.fn(),
 }));
 
-jest.mock("../middleware/auth", () =>
-  jest.fn((req, res, next) => {
-    req.tokenData = { id: "738cb54a-b59d-452e-99bd-4e24ab8dacdc" }; // Simular token decodificado
-    next();
-  }),
-);
+jest.mock("jsonwebtoken", () => ({
+  sign: jest.fn(),
+}));
 
-describe("GET /user", () => {
-  beforeEach(() => {
-    jest.clearAllMocks(); // Limpar mocks antes de cada teste
+describe("Create User", () => {
+  test("should create new user", async () => {
+    const user = {
+      id: "1",
+      name: "Teste",
+      email: "teste1234@gmail.com",
+      password: "teste123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      profile_picture: "teste",
+    };
+
+    prismaMock.user.create.mockResolvedValue(user);
+
+    await expect(create(user)).resolves.toEqual(
+      expect.objectContaining({
+        status: 200,
+        message: "Conta criada com sucesso",
+        data: expect.objectContaining({
+          email: "teste1234@gmail.com",
+          name: "Teste",
+        }),
+      }),
+    );
   });
 
-  it("should return a user successfully", async () => {
-    const userId = "738cb54a-b59d-452e-99bd-4e24ab8dacdc";
+  test("should handle an error for duplicate email", async () => {
+    const user = {
+      id: "1",
+      name: "Teste",
+      email: "teste543@gmail.com",
+      password: "teste123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      profile_picture: "teste",
+    };
 
-    (pool.query as jest.Mock).mockResolvedValueOnce({
-      rows: [{ id: userId, name: "Guilherme Machado Borim" }],
+    prismaMock.user.findUnique.mockResolvedValue(user);
+
+    await expect(create(user)).resolves.toEqual(
+      expect.objectContaining({
+        status: 400,
+        message: "Email já está em uso",
+        data: null,
+      }),
+    );
+  });
+
+  test("should handle error when creating a new user", async () => {
+    const user = {
+      id: "1",
+      name: "Teste",
+      email: "teste1234@gmail.com",
+      password: "teste123",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      profile_picture: "teste",
+    };
+
+    const mockError = new Error("Database connection error");
+    prismaMock.user.create.mockRejectedValue(mockError);
+
+    await expect(create(user)).resolves.toEqual(
+      expect.objectContaining({
+        status: 500,
+        message: "Erro no servidor",
+        data: "Database connection error",
+      }),
+    );
+
+    expect(prismaMock.user.create).toHaveBeenCalledTimes(1);
+    expect(prismaMock.user.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        email: "teste1234@gmail.com",
+        name: "Teste",
+      }),
+    });
+  });
+});
+
+describe("Login User", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("should return error when user is not found", async () => {
+    const user = {
+      email: "naoexiste@gmail.com",
+      password: "senha123",
+    };
+
+    prismaMock.user.findUnique.mockResolvedValue(null);
+
+    const result = await login(user);
+
+    expect(result).toEqual({
+      status: 400,
+      message: "Usuário não encontrado",
+      data: null,
+    });
+    expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+      where: {
+        email: user.email,
+      },
+    });
+    expect(prismaMock.user.findUnique).toHaveBeenCalledTimes(1);
+    expect(bcrypt.compare).not.toHaveBeenCalled();
+    expect(jwt.sign).not.toHaveBeenCalled();
+  });
+
+  test("should return error for invalid password", async () => {
+    const user = {
+      email: "teste@gmail.com",
+      password: "errada",
+    };
+
+    const foundUser = {
+      name: "guilherme",
+      id: "1",
+      email: "teste@gmail.com",
+      password: await bcrypt.hash("correta", 10),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      profile_picture: "teste",
+    };
+
+    prismaMock.user.findUnique.mockResolvedValue(foundUser);
+
+    (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+    const result = await login(user);
+
+    expect(result).toEqual({
+      status: 400,
+      message: "Senha inválida",
+      data: null,
     });
 
-    const response = await request(app)
-      .get("/user")
-      .set("Authorization", `Bearer fakeToken`)
-      .send();
-    console.log(response.body);
-    expect(response.status).toBe(200);
-    expect(response.body.data).toBeDefined();
-    expect(response.body.data.id).toBe(userId);
-    expect(response.body.data.name).toBe("Guilherme Machado Borim");
-    expect(pool.query).toHaveBeenCalledTimes(1);
-    expect(pool.query).toHaveBeenCalledWith(
-      `SELECT * FROM "user" WHERE id = '${userId}'`,
+    expect(bcrypt.compare).toHaveBeenCalledWith(
+      user.password,
+      foundUser.password,
     );
+    expect(bcrypt.compare).toHaveBeenCalledTimes(1);
+  });
+
+  test("should return success when login is valid", async () => {
+    const user = {
+      email: "teste@gmail.com",
+      password: "correta",
+    };
+
+    const foundUser = {
+      name: "guilherme",
+      id: "1",
+      email: "teste@gmail.com",
+      password: await bcrypt.hash("correta", 10),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      profile_picture: "teste",
+    };
+
+    prismaMock.user.findUnique.mockResolvedValue(foundUser);
+
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+    const mockToken = "mocked-jwt-token";
+    (jwt.sign as jest.Mock).mockReturnValue(mockToken);
+
+    const result = await login(user);
+
+    expect(result).toEqual({
+      status: 200,
+      message: "Login bem-sucedido",
+      data: mockToken,
+    });
+    expect(bcrypt.compare).toHaveBeenCalledTimes(1);
+    expect(bcrypt.compare).toHaveBeenCalledWith(
+      user.password,
+      foundUser.password,
+    );
+    expect(jwt.sign).toHaveBeenCalledTimes(1);
+    expect(jwt.sign).toHaveBeenCalledWith(
+      { id: foundUser.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" },
+    );
+  });
+
+  test("should handle error when login user", async () => {
+    const user = {
+      email: "teste@gmail.com",
+      password: "correta",
+    };
+
+    const foundUser = {
+      name: "guilherme",
+      id: "1",
+      email: "teste@gmail.com",
+      password: await bcrypt.hash("correta", 10),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      profile_picture: "teste",
+    };
+
+    prismaMock.user.findUnique.mockResolvedValue(foundUser);
+
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+    const mockError = new Error("Database connection error");
+    prismaMock.user.findUnique.mockRejectedValue(mockError);
+
+    await expect(login(user)).resolves.toEqual(
+      expect.objectContaining({
+        status: 500,
+        message: "Erro no servidor",
+        data: "Database connection error",
+      }),
+    );
+
+    expect(prismaMock.user.findUnique).toHaveBeenCalledTimes(1);
+    expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+      where: {
+        email: user.email,
+      },
+    });
   });
 });

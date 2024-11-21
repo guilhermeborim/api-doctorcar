@@ -1,4 +1,5 @@
 import type { JestConfigWithTsJest } from "ts-jest";
+
 const config: JestConfigWithTsJest = {
   collectCoverage: true,
   coverageDirectory: "coverage",
@@ -10,6 +11,7 @@ const config: JestConfigWithTsJest = {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   testEnvironment: "node",
+  setupFilesAfterEnv: ["./src/singleton.ts"],
 };
 
 export default config;

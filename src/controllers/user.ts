@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { response } from "express";
 import jwt from "jsonwebtoken";
 import { prismaClient } from "../prisma";
 import { GenderByName } from "../middleware/genderByName";
@@ -7,6 +8,7 @@ import {
   UserCreateProps,
   UserLoginProps,
 } from "../types";
+import prisma from "../client";
 
 const saltRounds = 10;
 
@@ -21,7 +23,7 @@ const create = async (user: UserCreateProps) => {
 
     const hashedPassword = await bcrypt.hash(user.password, saltRounds);
 
-    const userExist = await prismaClient.user.findUnique({
+    const userExist = await prisma.user.findUnique({
       where: {
         email: user.email,
       },
@@ -31,7 +33,7 @@ const create = async (user: UserCreateProps) => {
       return { status: 400, message: "Email já está em uso", data: null };
     }
 
-    const newUser = await prismaClient.user.create({
+    const newUser = await prisma.user.create({
       data: {
         name: user.name,
         email: user.email,
@@ -52,7 +54,7 @@ const create = async (user: UserCreateProps) => {
 
 const login = async (user: UserLoginProps) => {
   try {
-    const foundUser = await prismaClient.user.findUnique({
+    const foundUser = await prisma.user.findUnique({
       where: { email: user.email },
     });
 

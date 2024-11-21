@@ -1,13 +1,13 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { pool } from "../config/database";
-import { AppError } from "../errors/error";
+import { prismaClient } from "../prisma";
 import { GenderByName } from "../middleware/genderByName";
 import {
   UserChangePasswordProps,
   UserCreateProps,
   UserLoginProps,
 } from "../types";
+
 const saltRounds = 10;
 
 const create = async (user: UserCreateProps) => {
@@ -20,101 +20,140 @@ const create = async (user: UserCreateProps) => {
       gender === "male" ? maleProfilePicture : femaleProfilePicture;
 
     const hashedPassword = await bcrypt.hash(user.password, saltRounds);
-    const rows = await pool.query(
-      `INSERT INTO "user" ("name", "email","password","profilePicture","createdAt", "updatedAt")
-          VALUES('${user.name}', '${user.email}','${hashedPassword}','${selectedProfilePicture}', NOW(), NOW())`,
-    );
-    return rows;
+
+    const userExist = await prismaClient.user.findUnique({
+      where: {
+        email: user.email,
+      },
+    });
+
+    if (userExist) {
+      return { status: 400, message: "Email já está em uso", data: null };
+    }
+
+    const newUser = await prismaClient.user.create({
+      data: {
+        name: user.name,
+        email: user.email,
+        password: hashedPassword,
+        profile_picture: selectedProfilePicture,
+      },
+    });
+
+    return { status: 200, message: "Conta criada com sucesso", data: newUser };
   } catch (error) {
-    throw error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
 const login = async (user: UserLoginProps) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT * FROM "user" WHERE email = '${user.email}'`,
-    );
+    const foundUser = await prismaClient.user.findUnique({
+      where: { email: user.email },
+    });
 
-    if (rows.length === 0) {
-      throw new AppError("Usuário não encontrado", 404);
+    if (!foundUser) {
+      return { status: 400, message: "Usuário não encontrado", data: null };
     }
 
-    const password = rows[0].password;
-    const isMatch = await bcrypt.compare(user.password, password);
+    const isMatch = await bcrypt.compare(user.password, foundUser.password);
 
     if (!isMatch) {
-      throw new AppError("Senha incorreta", 400);
+      return { status: 400, message: "Senha inválida", data: null };
     }
+
     const token = jwt.sign(
-      { id: rows[0].id },
+      { id: foundUser.id },
       process.env.JWT_SECRET as string,
       {
-        expiresIn: "1d",
+        expiresIn: "7d",
       },
     );
 
-    return token;
+    return { status: 200, message: "Login bem-sucedido", data: token };
   } catch (error) {
-    throw error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
-const get = async (id: string) => {
+const logout = async () => {
   try {
-    const { rows } = await pool.query(
-      `SELECT * FROM "user" WHERE id = '${id}'`,
-    );
+    response
+      .clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      })
+      .json({ message: "Usuário deslogado" });
+  } catch (error: any) {
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+};
 
-    if (rows.length === 0) {
-      throw new AppError("Usuário não encontrado", 404);
-    }
-    return rows[0];
+const returnById = async (id: string) => {
+  try {
+    const user = await prismaClient.user.findUnique({
+      where: { id },
+    });
+
+    return { status: 200, message: "Usuário buscado com sucesso", data: user };
   } catch (error) {
-    throw error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
 const changePassword = async (user: UserChangePasswordProps) => {
   try {
-    const password = await pool.query(
-      `SELECT "password" FROM "user" WHERE email = '${user.email}'`,
-    );
+    const hashedPassword = await bcrypt.hash(user.new_password, saltRounds);
 
-    const isMatch = await bcrypt.compare(
-      user.oldPassword,
-      password.rows[0].password,
-    );
+    const userExist = await prismaClient.user.findUnique({
+      where: {
+        email: user.email,
+      },
+    });
 
-    if (!isMatch) {
-      throw new AppError("Senha antiga incorreta", 400);
+    if (!userExist) {
+      return { status: 400, message: "Usuário nao encontrado", data: null };
     }
-    const hashedNewPassword = await bcrypt.hash(user.newPassword, saltRounds);
-    const rows = await pool.query(
-      `UPDATE "user" SET password = '${hashedNewPassword}' WHERE email = '${user.email}'`,
-    );
 
-    if (rows.rowCount === 0) {
-      throw new AppError("Usuário não encontrado", 404);
-    }
-    return rows;
+    const updatedUser = await prismaClient.user.updateMany({
+      where: {
+        email: user.email,
+        password: user.old_password,
+      },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    return {
+      status: 200,
+      message: "Senha modificada com sucesso",
+      updatedUser,
+    };
   } catch (error) {
-    throw error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
-const checkEmailExist = async (email: string) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT "email" FROM "user" WHERE "email" = '${email}'`,
-    );
-
-    if (rows.length === 0) {
-      return false;
-    }
-    return rows;
-  } catch (error) {
-    throw error;
-  }
-};
-export { changePassword, checkEmailExist, create, get, login };
+export { changePassword, create, returnById, login, logout };

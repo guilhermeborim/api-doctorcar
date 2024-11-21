@@ -1,64 +1,148 @@
-import { pool } from "../config/database";
-import { AppError } from "../errors/error";
-import { MaintenanceProps } from "../types";
+import { prismaClient } from "../prisma";
+import { MaintenanceCreateProps } from "../types";
 
-const create = async (maintenance: MaintenanceProps) => {
+const create = async (maintenance: MaintenanceCreateProps) => {
   try {
-    const rows = await pool.query(
-      `INSERT INTO "maintenance" ("kilometersAtService", "kilometersNextService", "dateOfService",
-        "serviceCoast", "vehicleId", "maintenanceTypeId")
-        VALUES ('${maintenance.kilometersAtService}', '${maintenance.kilometersNextService}', '${maintenance.dateOfService}',
-        '${maintenance.serviceCoast}', '${maintenance.vehicle}', '${maintenance.maintenanceType}')
-      `,
-    );
-    return rows;
+    const rows = await prismaClient.maintenance.create({
+      data: {
+        date_of_service: maintenance.date_of_service,
+        kilometers_at_service: maintenance.kilometers_at_service,
+        kilometers_next_service: maintenance.kilometers_next_service,
+        service_coast: maintenance.service_coast,
+        maintenance_type_id: maintenance.maintenance_type_id.id,
+        vehicle_id: maintenance.vehicle_id.id,
+        active: true,
+      },
+    });
+
+    return {
+      status: 200,
+      message: "Manutenção criada com sucesso",
+      data: rows,
+    };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
-const get = async () => {
+const update = async (
+  maintenance_id: string,
+  maintenance: MaintenanceCreateProps,
+) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT * FROM "maintenance" LEFT JOIN "vehicle" ON "maintenance"."vehicleId" = "vehicle"."id"
-       LEFT JOIN "maintenance_type" ON "maintenance"."maintenanceTypeId" = "maintenance_type"."id"`,
-    );
-    if (rows.length === 0) {
-      throw new AppError("Nenhuma manutenção encontrada.", 404);
-    }
-    return rows;
+    const row = await prismaClient.maintenance.update({
+      data: {
+        date_of_service: maintenance.date_of_service,
+        kilometers_at_service: maintenance.kilometers_at_service,
+        kilometers_next_service: maintenance.kilometers_next_service,
+        service_coast: maintenance.service_coast,
+        maintenance_type_id: maintenance.maintenance_type_id.id,
+        vehicle_id: maintenance.vehicle_id.id,
+      },
+      where: {
+        idmaintenance: maintenance_id,
+      },
+    });
+
+    return {
+      status: 200,
+      message: "Manutenção modificada com sucesso",
+      data: row,
+    };
   } catch (error) {
-    throw error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
-const getById = async (id: string) => {
+const returnAll = async () => {
   try {
-    const { rows } = await pool.query(
-      `SELECT * FROM "maintenance" LEFT JOIN "vehicle" ON "maintenance"."vehicleId" = "vehicle"."id"
-       LEFT JOIN "maintenance_type" ON "maintenance"."maintenanceTypeId" = "maintenance_type"."id"
-       WHERE "vehicle"."id" = '${id}'`,
-    );
-    if (rows.length === 0) {
-      throw new AppError("Nenhuma manutenção encontrada.", 404);
-    }
-    return rows;
-  } catch (error) {
-    throw error;
-  }
-};
-const checkVehicleExist = async (id: string) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT "id" FROM "vehicle" WHERE "id" = '${id}'`,
-    );
+    const rows = await prismaClient.maintenance.findMany({});
 
-    if (rows.length === 0) {
-      return false;
-    }
-    return rows;
+    return {
+      status: 200,
+      message: "Manutenção encontrada com sucesso",
+      data: rows,
+    };
   } catch (error) {
-    throw error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
-export { checkVehicleExist, create, get, getById };
+
+const returnById = async (maintenance_id: string) => {
+  try {
+    const row = await prismaClient.maintenance.findUnique({
+      where: {
+        idmaintenance: maintenance_id,
+      },
+    });
+
+    return {
+      status: 200,
+      message: "Manutenção encontrada com sucesso",
+      data: row,
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+};
+
+const returnByVehicle = async (vehicle_id: string) => {
+  try {
+    const rows = await prismaClient.maintenance.findMany({
+      where: {
+        vehicle_id: vehicle_id,
+      },
+    });
+
+    return {
+      status: 200,
+      message: "Manutenção encontrada com sucesso",
+      data: rows,
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+};
+
+const deletar = async (maintenance_id: string) => {
+  try {
+    const row = await prismaClient.maintenance.delete({
+      where: {
+        idmaintenance: maintenance_id,
+      },
+    });
+
+    return {
+      status: 200,
+      message: "Manutenção deletada com sucesso",
+      data: row,
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+};
+export { create, deletar, returnAll, returnById, returnByVehicle, update };

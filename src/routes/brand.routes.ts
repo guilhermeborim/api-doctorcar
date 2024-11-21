@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { create } from "../controllers/brand";
+import { create, returnAll } from "../controllers/brand";
+import {
+  ErrorResponse,
+  ServerErrorResponse,
+  SuccessResponse,
+} from "../types/response";
 export const brand = Router();
 
 brand.post("/", async (request, response) => {
@@ -10,21 +15,27 @@ brand.post("/", async (request, response) => {
     const registerSaved = await create(register);
 
     if (registerSaved) {
-      return response.json({ status: 200, message: "State Vehicle created" });
+      return response.json(
+        new SuccessResponse("Brand created successfuly", registerSaved),
+      );
     }
-    return response.json({
-      status: "error",
-    });
+    return response.json(new ErrorResponse("Failed to create brand"));
   } catch (error) {
-    return response.json({ status: "failed", message: error });
+    return response.json(new ServerErrorResponse(error));
   }
 });
 
-// stateVehicle.get("/", async (request, response) => {
-//   try {
-//     const stateVehicle = await get();
-//     return response.json({ status: "success", data: stateVehicle });
-//   } catch (error) {
-//     return response.json({ status: "failed", message: error });
-//   }
-// });
+brand.get("/", async (request, response) => {
+  try {
+    const brands = await returnAll();
+
+    if (brands) {
+      return response.json(
+        new SuccessResponse("All brands successfuly", brands),
+      );
+    }
+    return response.json(new ErrorResponse("Failet get all brands"));
+  } catch (error) {
+    return response.json(new ServerErrorResponse(error));
+  }
+});

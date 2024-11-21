@@ -1,19 +1,18 @@
 import { Router } from "express";
-import {
-  changePassword,
-  checkEmailExist,
-  create,
-  get,
-  login,
-} from "../controllers/user";
-import { AppError } from "../errors/error";
+import { changePassword, create, login, returnById } from "../controllers/user";
 import auth from "../middleware/auth";
 import { validateData } from "../middleware/validate";
 import {
-  changePasswordSchema,
+  ErrorResponse,
+  ServerErrorResponse,
+  SuccessResponse,
+} from "../types/response";
+import {
+  changePasswordUserSchema,
   createUserSchema,
   loginUserSchema,
-} from "../utils/index";
+} from "../utils/user/validation";
+
 export const userRouter = Router();
 
 userRouter.post(
@@ -23,47 +22,33 @@ userRouter.post(
     try {
       const { name, email, password } = request.body;
 
-      const register = { name, email, password };
+      const { data, message, status } = await create({ name, email, password });
 
-      const emailExist = await checkEmailExist(email);
-
-      if (emailExist) {
-        throw new AppError("Este email já está cadastrado", 400);
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, data));
       }
-
-      const registerSaved = await create(register);
-
-      if (registerSaved) {
-        return response.json({ status: 200, data: register });
-      }
-      return response.json({
-        status: "error",
-      });
+      return response
+        .status(400)
+        .json(new ErrorResponse("Falha ao criar o usuário"));
     } catch (error) {
-      if (error instanceof AppError) {
-        return response
-          .status(error.statusCode)
-          .json({ status: "failed", message: error.message });
-      }
+      return response.json(new ServerErrorResponse(error));
     }
   },
 );
 
 userRouter.get("/", auth, async (request, response) => {
-  const userId = request.tokenData.id;
-
-  if (!userId) {
-    throw new AppError("Usuário não encontrado", 404);
-  }
+  const { id } = request.tokenData;
   try {
-    const user = await get(userId);
-    return response.json({ status: "success", data: user });
-  } catch (error) {
-    if (error instanceof AppError) {
-      return response
-        .status(error.statusCode)
-        .json({ status: "failed", message: error.message });
+    const { data, message, status } = await returnById(id);
+
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
     }
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao buscar o usuário"));
+  } catch (error) {
+    return response.json(new ServerErrorResponse(error));
   }
 });
 
@@ -73,59 +58,48 @@ userRouter.post(
   async (request, response) => {
     try {
       const { email, password } = request.body;
+      const register = {
+        email,
+        password,
+      };
 
-      const user = { email, password };
+      const { status, message, data } = await login(register);
 
-      const userLogged = await login(user);
-
-      if (userLogged) {
-        return response.json({ status: 200, data: userLogged });
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, data));
       }
-      return response.json({
-        status: "error",
+
+      return response.status(400).json({
+        message: message,
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        return response
-          .status(error.statusCode)
-          .json({ status: "failed", message: error.message });
-      }
+      return response.json(new ServerErrorResponse(error));
     }
   },
 );
 
-userRouter.post(
+userRouter.put(
   "/change-password",
-  validateData(changePasswordSchema),
+  validateData(changePasswordUserSchema),
   async (request, response) => {
     try {
-      const { email, oldPassword, newPassword } = request.body;
+      const { email, old_password, new_password } = request.body;
 
-      const user = { email, oldPassword, newPassword };
-
-      const emailExist = await checkEmailExist(email);
-
-      if (!emailExist) {
-        throw new AppError("Usuário não encontrado", 404);
-      }
-
-      const passwordChanged = await changePassword(user);
-
-      if (passwordChanged) {
-        return response.json({
-          status: 200,
-          message: "Senha alterada com sucesso",
-        });
-      }
-      return response.json({
-        status: "error",
+      const { data, message, status } = await changePassword({
+        email,
+        new_password,
+        old_password,
       });
-    } catch (error) {
-      if (error instanceof AppError) {
-        return response
-          .status(error.statusCode)
-          .json({ status: "failed", message: error.message });
+
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, data));
       }
+
+      return response
+        .status(400)
+        .json(new ErrorResponse("Falha ao modificar a senha"));
+    } catch (error) {
+      return response.json(new ServerErrorResponse(error));
     }
   },
 );

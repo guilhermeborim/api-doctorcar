@@ -1,14 +1,23 @@
 import { Router } from "express";
 import {
-  checkVehicleExist,
   create,
-  get,
-  getById,
+  returnAll,
+  returnById,
+  update,
+  returnByVehicle,
+  deletar,
 } from "../controllers/maintenance";
-import { AppError } from "../errors/error";
-import auth from "../middleware/auth";
+import {
+  ErrorResponse,
+  ServerErrorResponse,
+  SuccessResponse,
+} from "../types/response";
 import { validateData } from "../middleware/validate";
-import { createMaintenanceSchema } from "../utils";
+import {
+  createMaintenanceSchema,
+  editMaintenanceSchema,
+} from "../utils/maintenance/validation";
+import auth from "../middleware/auth";
 export const maintenance = Router();
 
 maintenance.post(
@@ -18,75 +27,152 @@ maintenance.post(
   async (request, response) => {
     try {
       const {
-        kilometersAtService,
-        kilometersNextService,
-        dateOfService,
-        serviceCoast,
-        vehicleId,
-        maintenanceTypeId,
+        kilometers_at_service,
+        kilometers_next_service,
+        date_of_service,
+        service_coast,
+        vehicle_id,
+        maintenance_type_id,
       } = request.body;
 
       const register = {
-        kilometersAtService,
-        kilometersNextService,
-        dateOfService,
-        serviceCoast,
-        vehicle: vehicleId,
-        maintenanceType: maintenanceTypeId,
+        date_of_service,
+        kilometers_at_service,
+        kilometers_next_service,
+        service_coast,
+        maintenance_type_id,
+        vehicle_id,
       };
 
-      const vehicleExist = await checkVehicleExist(vehicleId);
-      if (!vehicleExist) {
-        throw new AppError("Veículo não existe.", 404);
-      }
+      const { data, message, status } = await create(register);
 
-      const registerSaved = await create(register);
-      if (registerSaved) {
-        return response.json({
-          status: 200,
-          message: "Maintenance Created",
-        });
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, data));
       }
-      return response.json({
-        status: "error",
-      });
+      return response
+        .status(400)
+        .json(new ErrorResponse("Falha ao criar Manutenção"));
     } catch (error) {
-      if (error instanceof AppError) {
-        return response.status(error.statusCode).json({
-          status: "error",
-          message: error.message,
-        });
-      }
+      return response.json(new ServerErrorResponse(error));
     }
   },
 );
 
 maintenance.get("/", auth, async (request, response) => {
   try {
-    const maintenance = await get();
-    return response.json({ status: "success", data: maintenance });
-  } catch (error) {
-    if (error instanceof AppError) {
-      return response.status(error.statusCode).json({
-        status: "error",
-        message: error.message,
-      });
+    const { data, message, status } = await returnAll();
+
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
     }
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao buscar Manutenção"));
+  } catch (error) {
+    return response.json(new ServerErrorResponse(error));
   }
 });
 
-maintenance.get("/:id", auth, async (request, response) => {
-  const { id } = request.params;
+maintenance.patch(
+  "/",
+  auth,
+  validateData(editMaintenanceSchema),
+  async (request, response) => {
+    try {
+      const {
+        idmaintenance,
+        kilometers_at_service,
+        kilometers_next_service,
+        date_of_service,
+        service_coast,
+        vehicle_id,
+        maintenance_type_id,
+      } = request.body;
 
-  try {
-    const maintenance = await getById(id);
-    return response.json({ status: "success", data: maintenance });
-  } catch (error) {
-    if (error instanceof AppError) {
-      return response.status(error.statusCode).json({
-        status: "error",
-        message: error.message,
-      });
+      const { data } = await returnById(idmaintenance);
+
+      if (!data) {
+        return response
+          .status(404)
+          .json(new ErrorResponse("Veículo nao existe"));
+      }
+
+      const updateMaintenance = {
+        kilometers_at_service,
+        kilometers_next_service,
+        date_of_service,
+        service_coast,
+        vehicle_id,
+        maintenance_type_id,
+      };
+
+      const {
+        data: dataMaintenance,
+        message,
+        status,
+      } = await update(idmaintenance, updateMaintenance);
+
+      if (status === 200) {
+        return response.json(new SuccessResponse(message, dataMaintenance));
+      }
+
+      return response
+        .status(400)
+        .json(new ErrorResponse("Falha ao modificar Manutenção"));
+    } catch (error) {
+      return response.json(new ServerErrorResponse(error));
     }
+  },
+);
+
+maintenance.get("/:id", auth, async (request, response) => {
+  try {
+    const { id } = request.params;
+
+    const { data, message, status } = await returnById(id);
+
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
+    }
+
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao buscar Manutenção"));
+  } catch (error) {
+    return response.json(new ServerErrorResponse(error));
+  }
+});
+
+maintenance.get("/vehicle/:id", auth, async (request, response) => {
+  try {
+    const { id } = request.params;
+
+    const { data, message, status } = await returnByVehicle(id);
+
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
+    }
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao buscar Manutenção"));
+  } catch (error) {
+    return response.json(new ServerErrorResponse(error));
+  }
+});
+
+maintenance.delete("/delete/:id", auth, async (request, response) => {
+  try {
+    const { id } = request.params;
+
+    const { data, message, status } = await deletar(id);
+
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
+    }
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao deletar Manutenção"));
+  } catch (error) {
+    return response.json(new ServerErrorResponse(error));
   }
 });

@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { create } from "../controllers/typeMaintenance";
+import { create, returnAll } from "../controllers/typeMaintenance";
+import {
+  ErrorResponse,
+  ServerErrorResponse,
+  SuccessResponse,
+} from "../types/response";
 export const maintenanceType = Router();
 
 maintenanceType.post("/", async (request, response) => {
@@ -10,24 +15,34 @@ maintenanceType.post("/", async (request, response) => {
     const registerSaved = await create(register);
 
     if (registerSaved) {
-      return response.json({
-        status: 200,
-        message: "Maintenance Type Created",
-      });
+      return response.json(
+        new SuccessResponse(
+          "Maintenance Type created successfuly",
+          registerSaved,
+        ),
+      );
     }
-    return response.json({
-      status: "error",
-    });
+
+    return response.json(new ErrorResponse("Failed maintenance type created"));
   } catch (error) {
-    return response.json({ status: "failed", message: error });
+    return response.json(new ServerErrorResponse(error));
   }
 });
 
-// maintenanceType.get("/", async (request, response) => {
-//   try {
-//     const stateVehicle = await get();
-//     return response.json({ status: "success", data: stateVehicle });
-//   } catch (error) {
-//     return response.json({ status: "failed", message: error });
-//   }
-// });
+maintenanceType.get("/", async (request, response) => {
+  try {
+    const maintenanceTypes = await returnAll();
+
+    if (maintenanceTypes) {
+      return response.json(
+        new SuccessResponse(
+          "Get maintenance types successfuly",
+          maintenanceTypes,
+        ),
+      );
+    }
+    return response.json(new ErrorResponse("Failed get maintenance types"));
+  } catch (error) {
+    return response.json(new ServerErrorResponse(error));
+  }
+});

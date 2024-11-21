@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String    @unique
+  description String
+  logo        String
+  vehicles    Vehicle[]
+}
+
+model Maintenance {
+  idmaintenance           String          @id @default(auto()) @map("_id") @db.ObjectId
+  vehicle_id              String          @db.ObjectId
+  vehicle                 Vehicle         @relation(fields: [vehicle_id], references: [idvehicle])
+  maintenance_type_id     String          @db.ObjectId
+  maintenance_type        MaintenanceType @relation(fields: [maintenance_type_id], references: [id])
+  kilometers_at_service   Int
+  kilometers_next_service Int
+  date_of_service         DateTime
+  active                  Boolean
+  service_coast           Float
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+}
+
+model MaintenanceType {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  name         String        @unique
+  benefits     String[]
+  icon         String
+  maintenances Maintenance[]
+}
+
+model User {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  email           String    @unique
+  password        String
+  profile_picture String?
+  vehicles        Vehicle[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Vehicle {
+  idvehicle         String        @id @default(auto()) @map("_id") @db.ObjectId
+  brand_id          String        @db.ObjectId
+  brand             Brand         @relation(fields: [brand_id], references: [id])
+  model             String
+  license_plate     String        @unique
+  year              Int
+  owner_id          String        @db.ObjectId
+  owner             User          @relation(fields: [owner_id], references: [id])
+  kilometers_driven Int
+  daily_mileage     Int
+  maintenances      Maintenance[]
+  state_vehicle_id  String        @db.ObjectId
+  state_vehicle     VehicleState  @relation(fields: [state_vehicle_id], references: [id])
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model VehicleState {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  vehicles Vehicle[]
+}

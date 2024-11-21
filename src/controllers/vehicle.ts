@@ -1,91 +1,153 @@
-import { pool } from "../config/database";
-import { AppError } from "../errors/error";
-import { VehicleProps } from "../types";
+import { prismaClient } from "../prisma";
+import { VehicleCreateProps, VehicleProps } from "../types";
+import { ResponseApi } from "../types/response";
 
-const create = async (vehicle: VehicleProps) => {
+const create = async (vehicle: VehicleCreateProps, owner_id: string) => {
   try {
-    const rows = await pool.query(
-      `INSERT INTO "vehicle" ("model", "licensePlate", "year", "kilometersDriven", "dailyMileage", "brandId", "ownerId", "stateVehicleId")
-        VALUES ('${vehicle.model}', '${vehicle.licensePlate}', '${vehicle.year}', '${vehicle.kilometersDriven}', '${vehicle.dailyMileage}',
-        '${vehicle.brand}', '${vehicle.owner}', '${vehicle.stateVehicle}')
-      `,
-    );
-    return rows;
-  } catch (error) {
-    return error;
-  }
-};
-
-const get = async () => {
-  try {
-    const { rows } = await pool.query(`SELECT * FROM "vehicle"`);
-    if (rows.length === 0) {
-      throw new AppError("Não existe Veículos", 404);
-    }
-    return rows;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const update = async (vehicle: VehicleProps) => {
-  try {
-    const fieldsToUpdate: string[] = [];
-    const values = [];
-
-    Object.entries(vehicle).forEach(([key, value]) => {
-      if (value !== undefined && key !== "id") {
-        fieldsToUpdate.push(`"${key}" = $${fieldsToUpdate.length + 1}`);
-        values.push(value);
-      }
+    const plateExist = await prismaClient.vehicle.findUnique({
+      where: {
+        license_plate: vehicle.license_plate,
+      },
     });
 
-    if (fieldsToUpdate.length === 0) {
-      throw new AppError("No fields provided to update.");
+    if (plateExist) {
+      return { status: 400, message: "Placa já está cadastrada", data: null };
     }
+    const rows = await prismaClient.vehicle.create({
+      data: {
+        model: vehicle.model,
+        license_plate: vehicle.license_plate,
+        year: vehicle.year,
+        daily_mileage: vehicle.daily_mileage,
+        kilometers_driven: vehicle.kilometers_driven,
+        brand_id: vehicle.brand_id,
+        owner_id: owner_id,
+        state_vehicle_id: vehicle.state_vehicle_id,
+      },
+    });
 
-    values.push(vehicle.id);
-
-    const rows = await pool.query(
-      `UPDATE "vehicle" SET ${fieldsToUpdate.join(", ")} WHERE "id" = $${values.length}`,
-      values,
-    );
-
-    if (rows.rowCount === 0) {
-      throw new AppError("Veículo não encontrado", 404);
-    }
-    return rows;
+    return { status: 200, message: "Veículo criado com sucesso", data: rows };
   } catch (error) {
-    throw error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
-const deletar = async (id: string) => {
+const returnAll = async (owner_id: string) => {
   try {
-    await pool.query(`DELETE FROM "maintenance" WHERE "vehicleId" = '${id}'`);
-    const rows = await pool.query(`DELETE FROM "vehicle" WHERE "id" = '${id}'`);
+    const rows = await prismaClient.vehicle.findMany({
+      where: {
+        owner_id: owner_id,
+      },
+      include: {
+        brand: true,
+        state_vehicle: true,
+      },
+    });
 
-    if (rows.rowCount === 0) {
-      throw new AppError("Veículo não encontrado", 404);
-    }
-    return rows;
+    return {
+      status: 200,
+      message: "Veículo encontrado com sucesso",
+      data: rows,
+    };
   } catch (error) {
-    throw error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
 
-const checkLicensePlateExists = async (licensePlate: string) => {
+const returnById = async (vehicle_id: string, owner_id: string) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT "licensePlate" FROM "vehicle" WHERE "licensePlate" = '${licensePlate}'`,
-    );
+    const rows = await prismaClient.vehicle.findUnique({
+      where: {
+        idvehicle: vehicle_id,
+        owner_id: owner_id,
+      },
+      include: {
+        brand: true,
+        state_vehicle: true,
+        owner: true,
+      },
+    });
 
-    if (rows.length === 0) {
-      return false;
-    }
-    return rows;
+    return {
+      status: 200,
+      message: "Veículo encontrado com sucesso",
+      data: rows,
+    };
   } catch (error) {
-    return error;
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
   }
 };
-export { checkLicensePlateExists, create, deletar, get, update };
+
+const update = async (vehicle_id: string, vehicle: VehicleCreateProps) => {
+  try {
+    const plateExist = await prismaClient.vehicle.findUnique({
+      where: {
+        license_plate: vehicle.license_plate,
+      },
+    });
+
+    if (plateExist) {
+      return { status: 400, message: "Placa já está cadastrada", data: null };
+    }
+
+    const rows = await prismaClient.vehicle.update({
+      data: {
+        model: vehicle.model,
+        license_plate: vehicle.license_plate,
+        year: vehicle.year,
+        daily_mileage: vehicle.daily_mileage,
+        kilometers_driven: vehicle.kilometers_driven,
+        brand_id: vehicle.brand_id,
+        state_vehicle_id: vehicle.state_vehicle_id,
+      },
+      where: {
+        idvehicle: vehicle_id,
+      },
+    });
+
+    return {
+      status: 200,
+      message: "Veículo modificado com sucesso",
+      data: rows,
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+};
+
+const deletar = async (vehicle_id: string, owner_id: string) => {
+  try {
+    const rows = await prismaClient.vehicle.delete({
+      where: {
+        idvehicle: vehicle_id,
+        owner_id: owner_id,
+      },
+    });
+
+    return { status: 200, message: "Veículo deletado com sucesso", data: rows };
+  } catch (error) {
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+};
+
+export { create, deletar, returnAll, returnById, update };

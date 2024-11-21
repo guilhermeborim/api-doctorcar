@@ -1,15 +1,30 @@
-import { pool } from "../config/database";
-import { BrandProps } from "../types";
+import { prismaClient } from "../prisma";
+import { BrandCreateProps } from "../types";
 
-const create = async (brand: BrandProps) => {
+const create = async (brand: BrandCreateProps) => {
   try {
-    const rows = await pool.query(
-      `INSERT INTO "brand" ("name", "description", "logo") VALUES ('${brand.name}', '${brand.description}', '${brand.logo}')`,
-    );
-    return rows;
+    const row = await prismaClient.brand.create({
+      data: {
+        name: brand.name,
+        description: brand.description,
+        logo: brand.logo,
+      },
+    });
+
+    return row;
   } catch (error) {
     return error;
   }
 };
 
-export { create };
+const returnAll = async () => {
+  try {
+    const row = await prismaClient.brand.findMany({});
+
+    return row;
+  } catch (error) {
+    return error;
+  }
+};
+
+export { create, returnAll };

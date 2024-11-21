@@ -11,6 +11,7 @@ const create = async (maintenance: MaintenanceCreateProps) => {
         service_coast: maintenance.service_coast,
         maintenance_type_id: maintenance.maintenance_type_id.id,
         vehicle_id: maintenance.vehicle_id.id,
+        active: true,
       },
     });
 

@@ -109,7 +109,7 @@ describe("Login User", () => {
 
     expect(result).toEqual({
       status: 400,
-      message: "Usuário não encontrado",
+      message: "Usuário nao encontrado",
       data: null,
     });
     expect(prismaMock.user.findUnique).toHaveBeenCalledWith({

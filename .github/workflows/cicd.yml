@@ -21,4 +21,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - run: yarn install && yarn test
+      - run: yarn install
+      - run: yarn test --coverage
+      - run: |
+          if [ $(grep -Po '"lines": \{"total":\d+,.*"pct":\K\d+' coverage/coverage-summary.json) -lt 80 ]; then
+            echo "Coverage is below 80%. Failing build.";
+            exit 1;
+          fi

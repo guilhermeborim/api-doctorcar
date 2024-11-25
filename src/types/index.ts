@@ -81,8 +81,8 @@ export interface MaintenanceProps {
 
 // Create Maintenance
 export interface MaintenanceCreateProps {
-  vehicle_id: VehicleProps;
-  maintenance_type_id: MaintenanceTypeProps;
+  vehicle_id: string;
+  maintenance_type_id: string;
   kilometers_at_service: number;
   kilometers_next_service: number;
   date_of_service: Date;
@@ -103,6 +103,7 @@ export interface MaintenanceTypeCreateProps {
   name: string;
   benefits: string[];
   icon: string;
+  active: boolean;
 }
 
 // VehicleState

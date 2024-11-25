@@ -20,43 +20,40 @@ import {
 import auth from "../middleware/auth";
 export const maintenance = Router();
 
-maintenance.post(
-  "/",
-  auth,
-  validateData(createMaintenanceSchema),
-  async (request, response) => {
-    try {
-      const {
-        kilometers_at_service,
-        kilometers_next_service,
-        date_of_service,
-        service_coast,
-        vehicle_id,
-        maintenance_type_id,
-      } = request.body;
+maintenance.post("/", auth, async (request, response) => {
+  try {
+    const {
+      kilometers_at_service,
+      kilometers_next_service,
+      date_of_service,
+      service_coast,
+      vehicle_id,
+      maintenance_type_id,
+    } = request.body;
 
-      const register = {
-        date_of_service,
-        kilometers_at_service,
-        kilometers_next_service,
-        service_coast,
-        maintenance_type_id,
-        vehicle_id,
-      };
+    const register = {
+      date_of_service,
+      kilometers_at_service,
+      kilometers_next_service,
+      service_coast,
+      maintenance_type_id,
+      vehicle_id,
+    };
+    console.log(register);
 
-      const { data, message, status } = await create(register);
+    const { data, message, status } = await create(register);
 
-      if (status === 200) {
-        return response.json(new SuccessResponse(message, data));
-      }
-      return response
-        .status(400)
-        .json(new ErrorResponse("Falha ao criar Manutenção"));
-    } catch (error) {
-      return response.json(new ServerErrorResponse(error));
+    console.log(data);
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
     }
-  },
-);
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao criar Manutenção"));
+  } catch (error) {
+    return response.json(new ServerErrorResponse(error));
+  }
+});
 
 maintenance.get("/", auth, async (request, response) => {
   try {

@@ -9,9 +9,9 @@ export const maintenanceType = Router();
 
 maintenanceType.post("/", async (request, response) => {
   try {
-    const { name, benefits, icon } = request.body;
+    const { name, benefits, icon, active } = request.body;
 
-    const register = { name, benefits, icon };
+    const register = { name, benefits, icon, active };
     const registerSaved = await create(register);
 
     if (registerSaved) {

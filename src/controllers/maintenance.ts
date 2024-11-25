@@ -9,8 +9,8 @@ const create = async (maintenance: MaintenanceCreateProps) => {
         kilometers_at_service: maintenance.kilometers_at_service,
         kilometers_next_service: maintenance.kilometers_next_service,
         service_coast: maintenance.service_coast,
-        maintenance_type_id: maintenance.maintenance_type_id.id,
-        vehicle_id: maintenance.vehicle_id.id,
+        maintenance_type_id: maintenance.maintenance_type_id,
+        vehicle_id: maintenance.vehicle_id,
         active: true,
       },
     });
@@ -40,8 +40,8 @@ const update = async (
         kilometers_at_service: maintenance.kilometers_at_service,
         kilometers_next_service: maintenance.kilometers_next_service,
         service_coast: maintenance.service_coast,
-        maintenance_type_id: maintenance.maintenance_type_id.id,
-        vehicle_id: maintenance.vehicle_id.id,
+        maintenance_type_id: maintenance.maintenance_type_id,
+        vehicle_id: maintenance.vehicle_id,
       },
       where: {
         idmaintenance: maintenance_id,

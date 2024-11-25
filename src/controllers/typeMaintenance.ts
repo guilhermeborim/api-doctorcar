@@ -8,6 +8,7 @@ const create = async (maintenanceType: MaintenanceTypeCreateProps) => {
         icon: maintenanceType.icon,
         name: maintenanceType.name,
         benefits: maintenanceType.benefits,
+        active: maintenanceType.active,
       },
     });
     return rows;

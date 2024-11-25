@@ -99,7 +99,7 @@ describe("Login User", () => {
 
   test("should return error when user is not found", async () => {
     const user = {
-      email: "naoexiste123@gmail.com",
+      email: "testando@gmail.com",
       password: "senha123",
     };
 

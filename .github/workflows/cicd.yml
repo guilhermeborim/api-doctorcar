@@ -1,11 +1,6 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
 name: DoctorCar
 on:
   push:
-    branches: ["tests"]
-  pull_request:
     branches: ["tests"]
 jobs:
   build:
@@ -13,7 +8,6 @@ jobs:
     strategy:
       matrix:
         node-version: [20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
@@ -22,9 +16,10 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: yarn install
-      - run: yarn test --coverage
+      - run: yarn test -- --coverage
       - run: |
-          if [ $(grep -Po '"lines": \{"total":\d+,.*"pct":\K\d+' coverage/coverage-summary.json) -lt 80 ]; then
-            echo "Coverage is below 80%. Failing build.";
-            exit 1;
+          COVERAGE=$(npx jest --coverage --coverageReporters=text-summary | grep 'All files' | awk '{print $NF}' | tr -d '%')
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "Code coverage is below 80% ($COVERAGE%). Please add more tests."
+            exit 1
           fi

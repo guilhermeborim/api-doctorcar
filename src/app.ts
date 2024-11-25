@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import express from "express";
 import helmet from "helmet";
 import routes from "../src/routes/index";
-import cookieParser = require("cookie-parser");
+import cookieParser from "cookie-parser";
 dotenv.config();
 
 export const app = express();

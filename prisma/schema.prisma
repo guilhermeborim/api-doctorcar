@@ -41,6 +41,7 @@ model MaintenanceType {
   name         String        @unique
   benefits     String[]
   icon         String
+  active       Boolean
   maintenances Maintenance[]
 }
 

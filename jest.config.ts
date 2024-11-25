@@ -10,7 +10,6 @@ const config: JestConfigWithTsJest = {
       statements: 80,
     },
   },
-  coverageReporters: ["text", "lcov"],
   coverageDirectory: "coverage",
   coverageProvider: "v8",
   preset: "ts-jest/presets/default-esm",

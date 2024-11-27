@@ -22,27 +22,25 @@ model Brand {
 }
 
 model Maintenance {
-  idmaintenance           String          @id @default(auto()) @map("_id") @db.ObjectId
-  vehicle_id              String          @db.ObjectId
-  vehicle                 Vehicle         @relation(fields: [vehicle_id], references: [idvehicle])
-  maintenance_type_id     String          @db.ObjectId
-  maintenance_type        MaintenanceType @relation(fields: [maintenance_type_id], references: [id])
+  idmaintenance           String               @id @default(auto()) @map("_id") @db.ObjectId
+  name                    String
+  vehicle_id              String               @db.ObjectId
+  vehicle                 Vehicle              @relation(fields: [vehicle_id], references: [idvehicle])
   kilometers_at_service   Int
   kilometers_next_service Int
   date_of_service         DateTime
   active                  Boolean
   service_coast           Float
-  createdAt               DateTime        @default(now())
-  updatedAt               DateTime        @updatedAt
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  MaintenanceHistory      MaintenanceHistory[]
 }
 
-model MaintenanceType {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  name         String        @unique
-  benefits     String[]
-  icon         String
-  active       Boolean
-  maintenances Maintenance[]
+model MaintenanceHistory {
+  idhistory      String      @id @default(auto()) @map("_id") @db.ObjectId
+  maintenance_id String      @db.ObjectId
+  maintenance    Maintenance @relation(fields: [maintenance_id], references: [idmaintenance])
+  archivedAt     DateTime    @default(now())
 }
 
 model User {

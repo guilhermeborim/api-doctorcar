@@ -13,10 +13,7 @@ import {
   SuccessResponse,
 } from "../types/response";
 import { validateData } from "../middleware/validate";
-import {
-  createMaintenanceSchema,
-  editMaintenanceSchema,
-} from "../utils/maintenance/validation";
+import { editMaintenanceSchema } from "../utils/maintenance/validation";
 import auth from "../middleware/auth";
 export const maintenance = Router();
 
@@ -28,7 +25,7 @@ maintenance.post("/", auth, async (request, response) => {
       date_of_service,
       service_coast,
       vehicle_id,
-      maintenance_type_id,
+      name,
     } = request.body;
 
     const register = {
@@ -36,14 +33,12 @@ maintenance.post("/", auth, async (request, response) => {
       kilometers_at_service,
       kilometers_next_service,
       service_coast,
-      maintenance_type_id,
       vehicle_id,
+      name,
     };
-    console.log(register);
 
     const { data, message, status } = await create(register);
 
-    console.log(data);
     if (status === 200) {
       return response.json(new SuccessResponse(message, data));
     }
@@ -55,7 +50,7 @@ maintenance.post("/", auth, async (request, response) => {
   }
 });
 
-maintenance.get("/", auth, async (request, response) => {
+maintenance.get("/", async (request, response) => {
   try {
     const { data, message, status } = await returnAll();
 
@@ -83,7 +78,7 @@ maintenance.patch(
         date_of_service,
         service_coast,
         vehicle_id,
-        maintenance_type_id,
+        name,
       } = request.body;
 
       const { data } = await returnById(idmaintenance);
@@ -100,7 +95,7 @@ maintenance.patch(
         date_of_service,
         service_coast,
         vehicle_id,
-        maintenance_type_id,
+        name,
       };
 
       const {

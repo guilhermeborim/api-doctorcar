@@ -5,11 +5,11 @@ const create = async (maintenance: MaintenanceCreateProps) => {
   try {
     const rows = await prismaClient.maintenance.create({
       data: {
+        name: maintenance.name,
         date_of_service: maintenance.date_of_service,
         kilometers_at_service: maintenance.kilometers_at_service,
         kilometers_next_service: maintenance.kilometers_next_service,
         service_coast: maintenance.service_coast,
-        maintenance_type_id: maintenance.maintenance_type_id,
         vehicle_id: maintenance.vehicle_id,
         active: true,
       },
@@ -36,11 +36,11 @@ const update = async (
   try {
     const row = await prismaClient.maintenance.update({
       data: {
+        name: maintenance.name,
         date_of_service: maintenance.date_of_service,
         kilometers_at_service: maintenance.kilometers_at_service,
         kilometers_next_service: maintenance.kilometers_next_service,
         service_coast: maintenance.service_coast,
-        maintenance_type_id: maintenance.maintenance_type_id,
         vehicle_id: maintenance.vehicle_id,
       },
       where: {
@@ -64,7 +64,7 @@ const update = async (
 
 const returnAll = async () => {
   try {
-    const rows = await prismaClient.maintenance.findMany({});
+    const rows = await prismaClient.maintenance.findMany();
 
     return {
       status: 200,

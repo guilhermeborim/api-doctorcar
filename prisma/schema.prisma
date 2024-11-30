@@ -40,6 +40,8 @@ model MaintenanceHistory {
   idhistory      String      @id @default(auto()) @map("_id") @db.ObjectId
   maintenance_id String      @db.ObjectId
   maintenance    Maintenance @relation(fields: [maintenance_id], references: [idmaintenance])
+  vehicle_id     String      @db.ObjectId
+  vehicle        Vehicle     @relation(fields: [vehicle_id], references: [idvehicle])
   archivedAt     DateTime    @default(now())
 }
 
@@ -55,21 +57,22 @@ model User {
 }
 
 model Vehicle {
-  idvehicle         String        @id @default(auto()) @map("_id") @db.ObjectId
-  brand_id          String        @db.ObjectId
-  brand             Brand         @relation(fields: [brand_id], references: [id])
-  model             String
-  license_plate     String        @unique
-  year              Int
-  owner_id          String        @db.ObjectId
-  owner             User          @relation(fields: [owner_id], references: [id])
-  kilometers_driven Int
-  daily_mileage     Int
-  maintenances      Maintenance[]
-  state_vehicle_id  String        @db.ObjectId
-  state_vehicle     VehicleState  @relation(fields: [state_vehicle_id], references: [id])
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  idvehicle          String               @id @default(auto()) @map("_id") @db.ObjectId
+  brand_id           String               @db.ObjectId
+  brand              Brand                @relation(fields: [brand_id], references: [id])
+  model              String
+  license_plate      String               @unique
+  year               Int
+  owner_id           String               @db.ObjectId
+  owner              User                 @relation(fields: [owner_id], references: [id])
+  kilometers_driven  Int
+  daily_mileage      Int
+  maintenances       Maintenance[]
+  state_vehicle_id   String               @db.ObjectId
+  state_vehicle      VehicleState         @relation(fields: [state_vehicle_id], references: [id])
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  MaintenanceHistory MaintenanceHistory[]
 }
 
 model VehicleState {

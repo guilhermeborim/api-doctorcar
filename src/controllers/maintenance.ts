@@ -1,5 +1,11 @@
 import { prismaClient } from "../prisma";
 import { MaintenanceCreateProps } from "../types";
+import cron from "node-cron";
+
+// cron.schedule("* * * * *", async () => {
+//   console.log("Iniciando verificação de manutenções expiradas...");
+//   await expireMaintenances();
+// });
 
 const create = async (maintenance: MaintenanceCreateProps) => {
   try {
@@ -145,4 +151,90 @@ const deletar = async (maintenance_id: string) => {
     };
   }
 };
-export { create, deletar, returnAll, returnById, returnByVehicle, update };
+
+const expireMaintenances = async () => {
+  try {
+    const activeMaintenances = await prismaClient.maintenance.findMany({
+      where: {
+        active: true,
+      },
+      include: {
+        vehicle: true,
+      },
+    });
+
+    const expiredMaintenances = activeMaintenances.filter((maintenance) => {
+      if (!maintenance.vehicle?.daily_mileage) {
+        return false;
+      }
+
+      const remainingKilometers =
+        maintenance.kilometers_next_service - maintenance.kilometers_at_service;
+
+      const remainingDays =
+        remainingKilometers / maintenance.vehicle.daily_mileage;
+
+      return remainingDays <= 1;
+    });
+
+    for (const maintenance of expiredMaintenances) {
+      await prismaClient.maintenance.update({
+        where: {
+          idmaintenance: maintenance.idmaintenance,
+        },
+        data: {
+          active: false,
+        },
+      });
+
+      await prismaClient.maintenanceHistory.create({
+        data: {
+          maintenance_id: maintenance.idmaintenance,
+          vehicle_id: maintenance.vehicle_id,
+        },
+      });
+    }
+
+    console.log(
+      `${expiredMaintenances.length} manutenção(ões) expiradas e movidas para histórico.`,
+    );
+  } catch (error) {
+    return error;
+  }
+};
+
+const returnHistoryMaintenanceByVehicle = async (vehicle_id: string) => {
+  try {
+    const history = await prismaClient.maintenanceHistory.findMany({
+      where: {
+        vehicle_id: vehicle_id,
+      },
+      include: {
+        maintenance: true,
+        vehicle: true,
+      },
+    });
+    console.log(history);
+    return {
+      status: 200,
+      message: "Histórico encontrado com sucesso",
+      data: history,
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      message: "Erro no servidor",
+      data: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  }
+};
+export {
+  create,
+  deletar,
+  returnAll,
+  returnById,
+  returnByVehicle,
+  update,
+  expireMaintenances,
+  returnHistoryMaintenanceByVehicle,
+};

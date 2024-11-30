@@ -6,6 +6,7 @@ import {
   update,
   returnByVehicle,
   deletar,
+  returnHistoryMaintenanceByVehicle,
 } from "../controllers/maintenance";
 import {
   ErrorResponse,
@@ -147,6 +148,24 @@ maintenance.get("/vehicle/:id", auth, async (request, response) => {
     return response
       .status(400)
       .json(new ErrorResponse("Falha ao buscar Manutenção"));
+  } catch (error) {
+    return response.json(new ServerErrorResponse(error));
+  }
+});
+
+maintenance.get("/history/:id", auth, async (request, response) => {
+  try {
+    const { id } = request.params;
+    console.log(id);
+    const { data, message, status } =
+      await returnHistoryMaintenanceByVehicle(id);
+
+    if (status === 200) {
+      return response.json(new SuccessResponse(message, data));
+    }
+    return response
+      .status(400)
+      .json(new ErrorResponse("Falha ao buscar Histórico"));
   } catch (error) {
     return response.json(new ServerErrorResponse(error));
   }

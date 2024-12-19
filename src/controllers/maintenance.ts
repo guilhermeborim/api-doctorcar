@@ -1,6 +1,5 @@
 import { prismaClient } from "../prisma";
 import { MaintenanceCreateProps } from "../types";
-import cron from "node-cron";
 
 // cron.schedule("* * * * *", async () => {
 //   console.log("Iniciando verificação de manutenções expiradas...");
@@ -70,7 +69,13 @@ const update = async (
 
 const returnAll = async () => {
   try {
-    const rows = await prismaClient.maintenance.findMany();
+    const rows = await prismaClient.maintenance.findMany({
+      where: {
+        date_of_service: {
+          gt: new Date(),
+        },
+      },
+    });
 
     return {
       status: 200,
@@ -231,10 +236,10 @@ const returnHistoryMaintenanceByVehicle = async (vehicle_id: string) => {
 export {
   create,
   deletar,
+  expireMaintenances,
   returnAll,
   returnById,
   returnByVehicle,
-  update,
-  expireMaintenances,
   returnHistoryMaintenanceByVehicle,
+  update,
 };
